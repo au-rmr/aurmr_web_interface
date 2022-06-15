@@ -1,0 +1,9 @@
+<launch>
+  <!-- Web Interface -->
+  <node name="node_web_interface" pkg="aurmr_web_interface" type="node.sh" args="$(find aurmr_web_interface)" output="screen" />
+  <!-- -->
+
+  <!-- ROSBRIDGE -->
+  <!-- <node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher" respawn="false" output="screen"/> -->
+  <!-- -->
+</launch>
