@@ -4,6 +4,11 @@ import Head from "next/head";
 import { Box, Link, Stack, Typography } from "@mui/material";
 
 import Counter from "../features/counter/Counter";
+import ROSConnection from "../features/ros/ROSConnection";
+import ROSVideoDisplay from "../features/ros/ROSVideoDisplay";
+
+import * as log from 'loglevel'
+log.setLevel(log.levels.TRACE);
 
 const IndexPage: NextPage = () => {
   return (
@@ -14,6 +19,11 @@ const IndexPage: NextPage = () => {
       </Head>
       <Stack spacing={2} alignItems="center" mt={2}>
         <Counter />
+        <Stack direction='row' spacing={2}>
+          <ROSVideoDisplay style={{ borderRadius: 4, width: 500 }} topicName="/camera_lower_right/color/image_raw/compressed" />
+          <ROSVideoDisplay style={{ borderRadius: 4, width: 500 }} topicName="/camera_lower_left/color/image_raw/compressed" />
+        </Stack>
+        <ROSConnection />
         <Typography>
           Edit <code>src/App.tsx</code> and save to reload.
         </Typography>
