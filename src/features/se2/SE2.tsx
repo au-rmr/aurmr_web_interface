@@ -1,7 +1,7 @@
 import * as log from "loglevel";
-import { useState, CSSProperties, useRef } from "react";
+import { useState, CSSProperties, useRef, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { setPose } from "./se2Slice";
+import { setPose, selectPose } from "./se2Slice";
 
 import TargetAnchor from "./TargetAnchor";
 
@@ -27,6 +27,7 @@ function SE2(
         style?: CSSProperties
     }) {
     const dispatch = useAppDispatch();
+    const pose = useAppSelector(selectPose);
 
     const [localPose, setLocalPose] = useState({ x: -1, y: -1, theta: 0 })
     const [mousePressed, setMousePressed] = useState(false);
@@ -69,6 +70,12 @@ function SE2(
     const onMouseLeave = (event) => {
         setMousePressed(false)
     }
+
+    useEffect(() => {
+        if (!mousePressed) {
+            setLocalPose(pose);
+        }
+    }, [pose])
 
     return <svg viewBox={`0 0 ${width/scale} ${height/scale}`} width={width} height={height} style={style}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}>
