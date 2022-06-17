@@ -5,6 +5,7 @@ import { setPose } from "./se2Slice";
 
 import TargetAnchor from "./TargetAnchor";
 
+// from https://ieeexplore.ieee.org/document/9636008
 function SE2(
     {
         width, height, scale = 1, interfaceType,
@@ -51,7 +52,7 @@ function SE2(
     
             const x = event.clientX - left;
             const y = event.clientY - top;
-            
+
             setLocalPose({
                 x: localPose.x,
                 y: localPose.y,
@@ -69,10 +70,10 @@ function SE2(
         setMousePressed(false)
     }
 
-    return <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} style={style}
+    return <svg viewBox={`0 0 ${width/scale} ${height/scale}`} width={width} height={height} style={style}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}>
         {interfaceType == "targetanchor" &&
-            <TargetAnchor x={localPose.x} y={localPose.y} theta={localPose.theta} color={mousePressed ? color.accent : color.default} />
+            <TargetAnchor x={localPose.x/scale} y={localPose.y/scale} theta={localPose.theta} color={mousePressed ? color.accent : color.default} />
         }
     </svg>
 
