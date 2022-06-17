@@ -35,7 +35,7 @@ const IndexPage: NextPage = () => {
         {/* <Counter /> */}
         <Box sx={{ position: "relative", width: videoStreamSize.x, height: videoStreamSize.y }}>
           <SE2 width={videoStreamSize.x} height={videoStreamSize.y} interfaceType="targetanchor" style={{ border: 'solid', borderRadius: 4, position: "absolute", top: 0, left: 0, zIndex: 10 }} />
-          <ROSVideoDisplay style={{ borderRadius: 4, width: videoStreamSize.x, position: "absolute", top: 0, left: 0 }} topicName="/camera_lower_right/color/image_raw/compressed" streamSizeCallback={handleStreamSize} />
+          <ROSVideoDisplay style={{ borderRadius: 4, width: videoStreamSize.x, position: "absolute", top: 0, left: 0 }} topicName="/camera_wrist/color/image_raw/compressed" streamSizeCallback={handleStreamSize} />
         </Box>
         <Stack direction='row' spacing={2}>
           <ROSVideoDisplay style={{ borderRadius: 4, width: 500 }} topicName="/camera_lower_right/color/image_raw/compressed" />
