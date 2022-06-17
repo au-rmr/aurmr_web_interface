@@ -33,9 +33,8 @@ function SE2(
     const onMouseDown = (event) => {
         const { top, left } = event.target.getBoundingClientRect();
 
-        // why do we need to subtract 0.5 and 150?
-        const x = event.screenX - left - 0.5;
-        const y = event.screenY - top - 150;
+        const x = event.clientX - left;
+        const y = event.clientY - top;
         log.debug("Click at", x, y);
         setLocalPose({
             x: x,
@@ -49,11 +48,10 @@ function SE2(
     const onMouseMove = (event) => {
         if (mousePressed) {
             const { top, left } = event.target.getBoundingClientRect();
-
-            // why do we need to subtract 0.5 and 150?
-            const x = event.screenX - left - 0.5;
-            const y = event.screenY - top - 150;
-
+    
+            const x = event.clientX - left;
+            const y = event.clientY - top;
+            
             setLocalPose({
                 x: localPose.x,
                 y: localPose.y,
@@ -64,11 +62,11 @@ function SE2(
 
     const onMouseUp = (event) => {
         setMousePressed(false)
+        dispatch(setPose(localPose))
     }
 
     const onMouseLeave = (event) => {
         setMousePressed(false)
-        dispatch(setPose(localPose))
     }
 
     return <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} style={style}
