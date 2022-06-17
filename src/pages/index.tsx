@@ -8,6 +8,7 @@ import ROSConnection from "../features/ros/ROSConnection";
 import ROSVideoDisplay from "../features/ros/ROSVideoDisplay";
 
 import * as log from 'loglevel'
+import SE2 from "../features/se2/SE2";
 log.setLevel(log.levels.TRACE);
 
 const IndexPage: NextPage = () => {
@@ -18,7 +19,8 @@ const IndexPage: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Stack spacing={2} alignItems="center" mt={2}>
-        <Counter />
+        {/* <Counter /> */}
+        <SE2 width={500} height={500} interfaceType="targetanchor" style={{ border: 'solid' }} />
         <Stack direction='row' spacing={2}>
           <ROSVideoDisplay style={{ borderRadius: 4, width: 500 }} topicName="/camera_lower_right/color/image_raw/compressed" />
           <ROSVideoDisplay style={{ borderRadius: 4, width: 500 }} topicName="/camera_lower_left/color/image_raw/compressed" />

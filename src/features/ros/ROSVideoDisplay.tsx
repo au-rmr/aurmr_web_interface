@@ -15,7 +15,7 @@ import { CSSProperties, useEffect, useState } from "react";
 import { useAppSelector } from "../../app/hooks";
 import { selectConnected, ROS } from "./rosSlice";
 import * as ROSLIB from 'roslib';
-import { ROSTypes } from "./ros";
+import { ROSTypes } from "./ros.utils";
 
 function ROSVideoDisplay({ topicName, style = {} }: { topicName: string, style?: CSSProperties }) {
     const connected = useAppSelector(selectConnected);

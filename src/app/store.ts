@@ -2,12 +2,14 @@ import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit'
 
 import counterReducer from '../features/counter/counterSlice'
 import rosReducer from '../features/ros/rosSlice';
+import se2Reducer from '../features/se2/se2Slice'
 
 export function makeStore() {
   return configureStore({
     reducer: { 
       counter: counterReducer,
-      ros: rosReducer
+      ros: rosReducer,
+      se2: se2Reducer
     },
   })
 }

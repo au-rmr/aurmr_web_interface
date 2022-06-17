@@ -41,7 +41,7 @@ ROS.on('error', (event: any) => {
 
 })
 ROS.on('close', () => {
-    log.debug("closed")
+    log.debug("ROS Disconnected")
     store.dispatch(rosSlice.actions.disconnect());
 })
 
