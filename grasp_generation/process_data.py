@@ -1,5 +1,4 @@
 #%%
-from turtle import update
 import h5py
 from matplotlib import pyplot as plt, cm
 from mpl_toolkits.axes_grid1 import ImageGrid
@@ -8,7 +7,7 @@ import numpy as np
 import seaborn_image as isns
 import open3d as o3d
 from scipy.spatial import ConvexHull
-from scipy.optimize import dual_annealing
+from scipy.optimize import dual_annealing, differential_evolution, basinhopping, shgo
 from scipy.spatial import KDTree
 
 import random
@@ -120,31 +119,49 @@ dist_pcd_convex_hull = o3d_pcd_selected.compute_point_cloud_distance(
 dist_pcd_convex_hull = np.asarray(dist_pcd_convex_hull)
 
 # %%
+prev_idxs = []
+prev_error = 1000000
+
+
 def objective_function(x):
+    global prev_idxs
+    global prev_error
+
     indices = []
     for i in range(len(x)):
         if x[i] > 0.5:
             indices.append(i)
-    
-    print(np.where(np.isin(indices,x)))
+
+    indices = np.intersect1d(indices, get_candidates(prev_idxs)).tolist()
+
+    if len(indices) < 10:
+        return 1000000
 
     filtered_pcd = o3d_pcd_selected.select_by_index(indices)
-    update_vis(filtered_pcd)
 
     filtered_convex_hull = filtered_pcd.compute_convex_hull()[0]
     filtered_convex_hull_pcd = filtered_convex_hull.sample_points_uniformly(
-        len(filtered_pcd.points)*2
+        len(filtered_pcd.points) * 10
     )
+
+    update_vis(filtered_pcd, filtered_convex_hull_pcd)
 
     pcd_dist = filtered_pcd.compute_point_cloud_distance(filtered_convex_hull_pcd)
 
-    error = np.sum(np.power(pcd_dist, 2)) + (-0.0000001 * len(pcd_dist))
+    dist_term = np.sum(np.abs(pcd_dist))
 
-    # print(error, end='\r')
+    voilating_boundary_term = len(x) - len(indices)
+
+    num_pts_term = len(pcd_dist)
+
+    error = dist_term * 1000 + (-1e-5 * num_pts_term)
+
+    print(error, prev_error, end="\r")
 
     return error
 
-def get_candidates(guess_idxs, max_dist=1e-05, min_pts_per_candidate=3):
+
+def get_candidates(guess_idxs, max_dist=1e-05):
     guess_pts = np.asarray(o3d_pcd_selected.points)[guess_idxs]
     guess_pts = tuple(map(list, guess_pts))
 
@@ -153,43 +170,65 @@ def get_candidates(guess_idxs, max_dist=1e-05, min_pts_per_candidate=3):
 
     return list(set(chain(*results)))
 
+
 starting_guesses_idx = []
 starting_guess_mask = [0] * len(o3d_pcd_selected.points)
 
 for i in range(len(o3d_pcd_selected.points)):
-    if np.linalg.norm(o3d_pcd_selected.points[selected_point_idx] - o3d_pcd_selected.points[i]) < 1e-05:
+    if (
+        np.linalg.norm(
+            o3d_pcd_selected.points[selected_point_idx] - o3d_pcd_selected.points[i]
+        )
+        < 1e-05
+    ):
         starting_guesses_idx.append(i)
         starting_guess_mask[i] = 1
 
-# objective_function(starting_guess_mask)
-o3d.visualization.draw_geometries([
-    o3d_pcd_selected.select_by_index(starting_guesses_idx),
-    o3d_pcd_selected.select_by_index(get_candidates(starting_guesses_idx)).paint_uniform_color([1, 0, 0])
-])
+prev_idxs = starting_guesses_idx
 
+# objective_function(starting_guess_mask)
+# o3d.visualization.draw_geometries(
+#     [
+#         o3d_pcd_selected.select_by_index(starting_guesses_idx),
+#         o3d_pcd_selected.select_by_index(
+#             np.setdiff1d(get_candidates(starting_guesses_idx), starting_guesses_idx)
+#         ).paint_uniform_color([1, 0, 0]),
+#     ]
+# )
 # %%
 viz_geo = o3d.geometry.PointCloud()
 viz_geo.points = o3d_pcd_selected.points
+viz_convex_hull_geo = o3d.geometry.PointCloud()
 
-def update_vis(v):
+
+def update_vis(pcd, convex_hull):
     global viz_geo
-    viz_geo.points = v.points
-    viz_geo.colors = v.colors
+    global viz_convex_hull_geo
+    viz_geo.points = pcd.points
+    viz_geo.colors = pcd.colors
+
+    viz_convex_hull_geo.points = convex_hull.points
+    viz_convex_hull_geo.colors = convex_hull.colors
 
     vis.update_geometry(viz_geo)
+    vis.update_geometry(viz_convex_hull_geo)
     vis.poll_events()
     vis.update_renderer()
+
 
 vis = o3d.visualization.Visualizer()
 vis.create_window()
 vis.add_geometry(viz_geo)
+vis.add_geometry(viz_convex_hull_geo)
 
-# objective_function(starting_guess_mask)
-
-ret = dual_annealing(objective_function,
-        bounds=list(zip([0]*len(o3d_pcd_selected.points), [1]*len(o3d_pcd_selected.points))),
-        x0=starting_guess_mask,
-    )
+ret = dual_annealing(
+    objective_function,
+    bounds=list(
+        zip([0] * len(o3d_pcd_selected.points), [1] * len(o3d_pcd_selected.points))
+    ),
+    x0=starting_guess_mask,
+    accept=-4,
+)
 # %%
 vis.destroy_window()
 # %%
