@@ -110,15 +110,11 @@ o3d_convex_hull_pcd = o3d_convex_hull.sample_points_uniformly(
 # vis.destroy_window()
 # print(vis.get_picked_points())
 
+selected_pts = [30911, 31186, 39893, 45259, 39872, 30366, 30635, 34974, 34726, 39335, 42144, 38814, 37039, 23430, 24973, 31884]
+
 # Pick a specific starting point
 selected_point_idx = 39880
 print(o3d_pcd_selected.points[selected_point_idx])
-# %%
-# Calculate the distance between the two point clouds
-dist_pcd_convex_hull = o3d_pcd_selected.compute_point_cloud_distance(
-    o3d_convex_hull_pcd
-)
-dist_pcd_convex_hull = np.asarray(dist_pcd_convex_hull)
 
 # %%
 def objective_function(x):
