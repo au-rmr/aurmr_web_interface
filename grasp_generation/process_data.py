@@ -9,9 +9,11 @@ import seaborn_image as isns
 import open3d as o3d
 from scipy.spatial import ConvexHull
 from scipy.optimize import dual_annealing
+from scipy.spatial import KDTree
 
 import random
 import simplejson as json
+from itertools import chain
 
 #%%
 filename = "datasets/train_shard_000000.h5"
@@ -123,22 +125,33 @@ def objective_function(x):
     for i in range(len(x)):
         if x[i] > 0.5:
             indices.append(i)
+    
+    print(np.where(np.isin(indices,x)))
 
     filtered_pcd = o3d_pcd_selected.select_by_index(indices)
     update_vis(filtered_pcd)
 
     filtered_convex_hull = filtered_pcd.compute_convex_hull()[0]
     filtered_convex_hull_pcd = filtered_convex_hull.sample_points_uniformly(
-        len(filtered_pcd.points)
+        len(filtered_pcd.points)*2
     )
 
     pcd_dist = filtered_pcd.compute_point_cloud_distance(filtered_convex_hull_pcd)
 
     error = np.sum(np.power(pcd_dist, 2)) + (-0.0000001 * len(pcd_dist))
 
-    print(error, end='\r')
+    # print(error, end='\r')
 
     return error
+
+def get_candidates(guess_idxs, max_dist=1e-05, min_pts_per_candidate=3):
+    guess_pts = np.asarray(o3d_pcd_selected.points)[guess_idxs]
+    guess_pts = tuple(map(list, guess_pts))
+
+    tree = KDTree(o3d_pcd_selected.points)
+    results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
+
+    return list(set(chain(*results)))
 
 starting_guesses_idx = []
 starting_guess_mask = [0] * len(o3d_pcd_selected.points)
@@ -149,6 +162,10 @@ for i in range(len(o3d_pcd_selected.points)):
         starting_guess_mask[i] = 1
 
 # objective_function(starting_guess_mask)
+o3d.visualization.draw_geometries([
+    o3d_pcd_selected.select_by_index(starting_guesses_idx),
+    o3d_pcd_selected.select_by_index(get_candidates(starting_guesses_idx)).paint_uniform_color([1, 0, 0])
+])
 
 # %%
 viz_geo = o3d.geometry.PointCloud()
