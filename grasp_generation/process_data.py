@@ -113,7 +113,7 @@ o3d_convex_hull_pcd = o3d_convex_hull.sample_points_uniformly(
 selected_pts = [30911, 31186, 39893, 45259, 39872, 30366, 30635, 34974, 34726, 39335, 42144, 38814, 37039, 23430, 24973, 31884]
 
 # Pick a specific starting point
-selected_point_idx = 39880
+selected_point_idx = selected_pts[13]#39880
 print(o3d_pcd_selected.points[selected_point_idx])
 
 # %%
@@ -137,7 +137,7 @@ def objective_function(x):
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term * 1000 + (-1e-2 * num_pts_term)
+    error = dist_term * 1000 + (-5e-3 * num_pts_term)
 
     print(error, end="\r")
 
@@ -196,7 +196,7 @@ def update_vis(pcd, convex_hull):
     viz_convex_hull_geo.points = convex_hull.points
     viz_convex_hull_geo.colors = convex_hull.colors
 
-    vis.update_geometry(viz_geo)
+    # vis.update_geometry(viz_geo)
     vis.update_geometry(viz_convex_hull_geo)
     vis.poll_events()
     vis.update_renderer()
@@ -204,7 +204,8 @@ def update_vis(pcd, convex_hull):
 
 vis = o3d.visualization.Visualizer()
 vis.create_window()
-vis.add_geometry(viz_geo)
+# vis.add_geometry(viz_geo)
+vis.add_geometry(o3d_pcd_selected)
 vis.add_geometry(viz_convex_hull_geo)
 
 # ret = dual_annealing(
