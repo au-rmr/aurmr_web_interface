@@ -9,10 +9,12 @@ import open3d as o3d
 from scipy.spatial import ConvexHull
 from scipy.optimize import dual_annealing, differential_evolution, basinhopping, shgo
 from scipy.spatial import KDTree
+import optimize
 
 import random
 import simplejson as json
 from itertools import chain
+import utils
 
 #%%
 filename = "datasets/train_shard_000000.h5"
@@ -119,23 +121,8 @@ dist_pcd_convex_hull = o3d_pcd_selected.compute_point_cloud_distance(
 dist_pcd_convex_hull = np.asarray(dist_pcd_convex_hull)
 
 # %%
-prev_idxs = []
-prev_error = 1000000
-
-
 def objective_function(x):
-    global prev_idxs
-    global prev_error
-
-    indices = []
-    for i in range(len(x)):
-        if x[i] > 0.5:
-            indices.append(i)
-
-    indices = np.intersect1d(indices, get_candidates(prev_idxs)).tolist()
-
-    if len(indices) < 10:
-        return 1000000
+    indices = utils.mask_to_index(x)
 
     filtered_pcd = o3d_pcd_selected.select_by_index(indices)
 
@@ -154,12 +141,16 @@ def objective_function(x):
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term * 1000 + (-1e-5 * num_pts_term)
+    error = dist_term * 1000 + (-1e-2 * num_pts_term)
 
-    print(error, prev_error, end="\r")
+    print(error, end="\r")
 
     return error
 
+def constrain_to_neighboring_pts(curr, prev):
+    c = np.array(curr).astype(int)
+    p = np.array(utils.index_to_mask(get_candidates(utils.mask_to_index(prev)), len(prev))).astype(int)
+    return np.bitwise_and(c, p).tolist()
 
 def get_candidates(guess_idxs, max_dist=1e-05):
     guess_pts = np.asarray(o3d_pcd_selected.points)[guess_idxs]
@@ -174,6 +165,7 @@ def get_candidates(guess_idxs, max_dist=1e-05):
 starting_guesses_idx = []
 starting_guess_mask = [0] * len(o3d_pcd_selected.points)
 
+# TODO: use get_candidates here?
 for i in range(len(o3d_pcd_selected.points)):
     if (
         np.linalg.norm(
@@ -183,8 +175,6 @@ for i in range(len(o3d_pcd_selected.points)):
     ):
         starting_guesses_idx.append(i)
         starting_guess_mask[i] = 1
-
-prev_idxs = starting_guesses_idx
 
 # objective_function(starting_guess_mask)
 # o3d.visualization.draw_geometries(
@@ -221,14 +211,25 @@ vis.create_window()
 vis.add_geometry(viz_geo)
 vis.add_geometry(viz_convex_hull_geo)
 
-ret = dual_annealing(
+# ret = dual_annealing(
+#     objective_function,
+#     bounds=list(
+#         zip([0] * len(o3d_pcd_selected.points), [1] * len(o3d_pcd_selected.points))
+#     ),
+#     x0=starting_guess_mask,
+#     accept=-4,
+# )
+optimize.simulated_annealing(
     objective_function,
-    bounds=list(
-        zip([0] * len(o3d_pcd_selected.points), [1] * len(o3d_pcd_selected.points))
-    ),
-    x0=starting_guess_mask,
-    accept=-4,
+    starting_guess_mask,
+    [1] * len(o3d_pcd_selected.points),
+    [0] * len(o3d_pcd_selected.points),
+    constrain_to_neighboring_pts,
+    n_iterations=100,
+    step_size=10,
+    temp=1000
 )
+vis.run()
 # %%
 vis.destroy_window()
 # %%
