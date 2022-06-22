@@ -141,7 +141,7 @@ def objective_function(x, *args):
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term * 1000 + (-1e-9 * num_pts_term)
+    error = dist_term * 1000 + (-5e-9 * num_pts_term)
 
     print(error, end="\r")
 
