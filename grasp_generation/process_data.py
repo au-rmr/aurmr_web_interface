@@ -137,11 +137,11 @@ def objective_function(x, *args):
 
     pcd_dist = filtered_pcd.compute_point_cloud_distance(filtered_convex_hull_pcd)
 
-    dist_term = np.sum(np.abs(pcd_dist))
+    dist_term = np.sum(np.power(pcd_dist, 2))
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term * 1000 + (-5e-3 * num_pts_term)
+    error = dist_term * 1000 + (-1e-9 * num_pts_term)
 
     print(error, end="\r")
 
@@ -156,7 +156,7 @@ def constrain_to_neighboring_pts(curr, prev, pcd):
     return np.bitwise_and(c, p).tolist()
 
 
-def get_candidates(pcd, guess_idxs, max_dist=1e-05):
+def get_candidates(pcd, guess_idxs, max_dist=5e-6):
     guess_pts = np.asarray(pcd.points)[guess_idxs]
     guess_pts = tuple(map(list, guess_pts))
 
