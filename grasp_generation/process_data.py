@@ -4,17 +4,15 @@ from matplotlib import pyplot as plt, cm
 from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib import colors
 import numpy as np
-import seaborn_image as isns
 import open3d as o3d
-from scipy.spatial import ConvexHull
-from scipy.optimize import dual_annealing, differential_evolution, basinhopping, shgo
 from scipy.spatial import KDTree
-import optimize
+from optimize import simulated_annealing
 
 import random
 import simplejson as json
 from itertools import chain
 import utils
+from functools import partial
 
 #%%
 filename = "datasets/train_shard_000000.h5"
@@ -92,17 +90,7 @@ o3d_pcd_selected = o3d.geometry.PointCloud.create_from_rgbd_image(
 
 # Flip the point cloud so it is facing the right way
 o3d_pcd_selected.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
-# %%
-# Compute the convex hull of the point cloud
-o3d_convex_hull = o3d_pcd_selected.compute_convex_hull()[0]
-
-# Scatter points on it to make a 2nd point cloud
-o3d_convex_hull_pcd = o3d_convex_hull.sample_points_uniformly(
-    len(o3d_pcd_selected.points)
-)
 #%%
-# o3d.visualization.draw_geometries([o3d_convex_hull_pcd, o3d_pcd_selected])
-
 # vis = o3d.visualization.VisualizerWithEditing()
 # vis.create_window()
 # vis.add_geometry(o3d_pcd_selected)
@@ -110,17 +98,35 @@ o3d_convex_hull_pcd = o3d_convex_hull.sample_points_uniformly(
 # vis.destroy_window()
 # print(vis.get_picked_points())
 
-selected_pts = [30911, 31186, 39893, 45259, 39872, 30366, 30635, 34974, 34726, 39335, 42144, 38814, 37039, 23430, 24973, 31884]
+selected_pts = [
+    30911,
+    31186,
+    39893,
+    45259,
+    39872,
+    30366,
+    30635,
+    34974,
+    34726,
+    39335,
+    42144,
+    38814,
+    37039,
+    23430,
+    24973,
+    31884,
+]
 
 # Pick a specific starting point
-selected_point_idx = selected_pts[13]#39880
+selected_point_idx = selected_pts[13]  # 39880
 print(o3d_pcd_selected.points[selected_point_idx])
 
 # %%
-def objective_function(x):
+def objective_function(x, *args):
+    pcd = args[0]
     indices = utils.mask_to_index(x)
 
-    filtered_pcd = o3d_pcd_selected.select_by_index(indices)
+    filtered_pcd = pcd.select_by_index(indices)
 
     filtered_convex_hull = filtered_pcd.compute_convex_hull()[0]
     filtered_convex_hull_pcd = filtered_convex_hull.sample_points_uniformly(
@@ -133,8 +139,6 @@ def objective_function(x):
 
     dist_term = np.sum(np.abs(pcd_dist))
 
-    voilating_boundary_term = len(x) - len(indices)
-
     num_pts_term = len(pcd_dist)
 
     error = dist_term * 1000 + (-5e-3 * num_pts_term)
@@ -143,44 +147,69 @@ def objective_function(x):
 
     return error
 
-def constrain_to_neighboring_pts(curr, prev):
+
+def constrain_to_neighboring_pts(curr, prev, pcd):
     c = np.array(curr).astype(int)
-    p = np.array(utils.index_to_mask(get_candidates(utils.mask_to_index(prev)), len(prev))).astype(int)
+    p = np.array(
+        utils.index_to_mask(get_candidates(pcd, utils.mask_to_index(prev)), len(prev))
+    ).astype(int)
     return np.bitwise_and(c, p).tolist()
 
-def get_candidates(guess_idxs, max_dist=1e-05):
-    guess_pts = np.asarray(o3d_pcd_selected.points)[guess_idxs]
+
+def get_candidates(pcd, guess_idxs, max_dist=1e-05):
+    guess_pts = np.asarray(pcd.points)[guess_idxs]
     guess_pts = tuple(map(list, guess_pts))
 
-    tree = KDTree(o3d_pcd_selected.points)
+    tree = KDTree(pcd.points)
     results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
 
     return list(set(chain(*results)))
 
 
-starting_guesses_idx = []
-starting_guess_mask = [0] * len(o3d_pcd_selected.points)
+def optimize(pcd, starting_pt):
+    starting_guesses_idx = []
+    starting_guess_mask = [0] * len(pcd.points)
 
-# TODO: use get_candidates here?
-for i in range(len(o3d_pcd_selected.points)):
-    if (
-        np.linalg.norm(
-            o3d_pcd_selected.points[selected_point_idx] - o3d_pcd_selected.points[i]
-        )
-        < 1e-05
-    ):
-        starting_guesses_idx.append(i)
-        starting_guess_mask[i] = 1
+    # TODO: use get_candidates here?
+    for i in range(len(pcd.points)):
+        if np.linalg.norm(pcd.points[starting_pt] - pcd.points[i]) < 1e-05:
+            starting_guesses_idx.append(i)
+            starting_guess_mask[i] = 1
 
-# objective_function(starting_guess_mask)
-# o3d.visualization.draw_geometries(
-#     [
-#         o3d_pcd_selected.select_by_index(starting_guesses_idx),
-#         o3d_pcd_selected.select_by_index(
-#             np.setdiff1d(get_candidates(starting_guesses_idx), starting_guesses_idx)
-#         ).paint_uniform_color([1, 0, 0]),
-#     ]
-# )
+    # objective_function(starting_guess_mask)
+    # o3d.visualization.draw_geometries(
+    #     [
+    #         pcd.select_by_index(starting_guesses_idx),
+    #         pcd.select_by_index(
+    #             np.setdiff1d(get_candidates(starting_guesses_idx), starting_guesses_idx)
+    #         ).paint_uniform_color([1, 0, 0]),
+    #     ]
+    # )
+
+    constraint = partial(constrain_to_neighboring_pts, pcd=pcd)
+
+    simulated_annealing(
+        objective_function,
+        starting_guess_mask,
+        [1] * len(o3d_pcd_selected.points),
+        [0] * len(o3d_pcd_selected.points),
+        constraint,
+        n_iterations=100,
+        step_size=10,
+        temp=1000,
+        args=(pcd,)
+    )
+
+
+# %%
+vis = o3d.visualization.VisualizerWithEditing()
+vis.create_window()
+vis.add_geometry(o3d_pcd_selected)
+vis.run()  # user picks points
+vis.destroy_window()
+
+selected_point_idx = vis.get_picked_points()[0]
+
 # %%
 viz_geo = o3d.geometry.PointCloud()
 viz_geo.points = o3d_pcd_selected.points
@@ -207,26 +236,10 @@ vis.create_window()
 # vis.add_geometry(viz_geo)
 vis.add_geometry(o3d_pcd_selected)
 vis.add_geometry(viz_convex_hull_geo)
+optimize(o3d_pcd_selected, selected_point_idx)
 
-# ret = dual_annealing(
-#     objective_function,
-#     bounds=list(
-#         zip([0] * len(o3d_pcd_selected.points), [1] * len(o3d_pcd_selected.points))
-#     ),
-#     x0=starting_guess_mask,
-#     accept=-4,
-# )
-optimize.simulated_annealing(
-    objective_function,
-    starting_guess_mask,
-    [1] * len(o3d_pcd_selected.points),
-    [0] * len(o3d_pcd_selected.points),
-    constrain_to_neighboring_pts,
-    n_iterations=100,
-    step_size=10,
-    temp=1000
-)
 vis.run()
-# %%
 vis.destroy_window()
+# %%
+
 # %%

@@ -6,11 +6,11 @@ from numpy.random import rand
 from numpy.random import seed
 
 
-def simulated_annealing(objective, x0, upper_bounds, lower_bounds, constrain, n_iterations=1000, step_size=0.1, temp=10):
+def simulated_annealing(objective, x0, upper_bounds, lower_bounds, constrain, n_iterations=1000, step_size=0.1, temp=10, args=()):
     # Modified from: https://machinelearningmastery.com/simulated-annealing-from-scratch-in-python/
 
     best = x0
-    best_eval = objective(best)
+    best_eval = objective(best, *args)
 
     # current working solution
     curr, curr_eval = best, best_eval
@@ -26,7 +26,7 @@ def simulated_annealing(objective, x0, upper_bounds, lower_bounds, constrain, n_
         candidate = constrain(candidate, best)
 
         # evaluate candidate point
-        candidate_eval = objective(candidate)
+        candidate_eval = objective(candidate, *args)
         # check for new best solution
         if candidate_eval < best_eval:
             # store new best point
