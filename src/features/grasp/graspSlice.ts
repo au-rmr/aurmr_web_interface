@@ -30,6 +30,7 @@ export const generateHeuristicGrasp = createAsyncThunk<{result: string}, SE2Type
                   + result.result);
                   resolve(result.result)
               });
+              generateHeuristicGraspService.unadvertise()
         } else {
             reject("invalid pose")
         }

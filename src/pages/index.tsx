@@ -30,7 +30,12 @@ const IndexPage: NextPage = () => {
   }
 
   const handleGenerateGrasp = () => {
-    dispatch(generateHeuristicGrasp(store.getState().se2))
+    const se2 = store.getState().se2;
+    dispatch(generateHeuristicGrasp({
+      x: se2.x / videoStreamSize.x,
+      y: se2.y / videoStreamSize.y,
+      theta: se2.theta
+    }))
   };
 
   return (
@@ -47,9 +52,9 @@ const IndexPage: NextPage = () => {
             <ROSVideoDisplay style={{ borderRadius: 4, width: videoStreamSize.x, position: "absolute", top: 0, left: 0 }} topicName="/camera_wrist/color/image_raw/compressed" streamSizeCallback={handleStreamSize} />
           </Box>
           <Paper>
-            <Stack spacing={2} sx={{m: 2}}>
+            <Stack spacing={2} sx={{ m: 2 }}>
               <Button variant="outlined"
-              onClick={handleGenerateGrasp}>
+                onClick={handleGenerateGrasp}>
                 Generate Grasp
               </Button>
               <Button variant="contained">
