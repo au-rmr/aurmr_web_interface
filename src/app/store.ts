@@ -2,14 +2,16 @@ import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit'
 
 import counterReducer from '../features/counter/counterSlice'
 import rosReducer from '../features/ros/rosSlice';
-import se2Reducer from '../features/se2/se2Slice'
+import se2Reducer from '../features/se2/se2Slice';
+import graspReducer from '../features/grasp/graspSlice';
 
 export function makeStore() {
   return configureStore({
     reducer: { 
       counter: counterReducer,
       ros: rosReducer,
-      se2: se2Reducer
+      se2: se2Reducer,
+      grasp: graspReducer
     },
   })
 }

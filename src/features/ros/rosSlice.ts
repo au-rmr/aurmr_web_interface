@@ -1,4 +1,4 @@
-import {createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit'
 
 import * as ROSLIB from 'roslib';
 import store, { AppState } from '../../app/store';
@@ -29,7 +29,7 @@ export const { disconnect } = rosSlice.actions;
 
 export const selectConnected = (state: AppState) => state.ros.connected;
 
-export const ROS = new ROSLIB.Ros({url : 'ws://localhost:9090'})
+export const ROS = new ROSLIB.Ros({ url: 'ws://localhost:9090' })
 
 ROS.on('connection', () => {
     log.debug("ROS Connected");
