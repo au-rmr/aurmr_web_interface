@@ -24,7 +24,7 @@ def create_o3d_pcd(color_img, depth_img, camera_intrinsics):
     o3d_depth_img = o3d.geometry.Image(depth_img.astype(np.float32))
 
     o3d_camera_intrinsics = o3d.camera.PinholeCameraIntrinsic()
-    o3d_camera_intrinsics.intrinsic_matrix = camera_intrinsics
+    o3d_camera_intrinsics.intrinsic_matrix = camera_intrinsics[:,:3]
 
     o3d_rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
         o3d_color_img, o3d_depth_img, convert_rgb_to_intensity=False
@@ -34,4 +34,4 @@ def create_o3d_pcd(color_img, depth_img, camera_intrinsics):
         o3d_rgbd_image, o3d_camera_intrinsics
     )
 
-    return o3d_pcd
+    return o3d_pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])

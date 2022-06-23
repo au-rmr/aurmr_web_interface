@@ -12,8 +12,9 @@ from cv_bridge import CvBridge
 import numpy as np
 import rospy
 import open3d as o3d
+import cv2
 
-import aurmr_web_interface
+from aurmr_web_interface.utils import create_o3d_pcd
 
 bridge = CvBridge()
 
@@ -21,10 +22,12 @@ camera_intrinsics = []
 color = []
 depth = []
 
-viz_geo = o3d.geometry.PointCloud()
+pcd = None
+time_since_last_pcd = 0
+
+pcd_geo = o3d.geometry.PointCloud()
 viz = o3d.visualization.Visualizer()
 viz.create_window()
-viz.add_geometry(viz_geo)
 
 
 def camera_info_callback(camera_info):
@@ -34,24 +37,23 @@ def camera_info_callback(camera_info):
 
 def color_image_callback(color_image):
     global color
-    color = np.frombuffer(color_image.data, dtype=np.uint8).reshape(
-        color_image.height, color_image.width, -1
-    )
+    color = bridge.imgmsg_to_cv2(color_image, "rgb8")[40:760]
+    # cv2.imshow("color", color)
+    # cv2.waitKey(1)
 
 
 def depth_image_callback(depth_image):
     global depth
-    depth = np.frombuffer(depth_image.data, dtype=np.uint8).reshape(
-        depth_image.height, depth_image.width, -1
-    )
+    global pcd
+    global time_since_last_pcd
+    depth = bridge.imgmsg_to_cv2(depth_image, desired_encoding="passthrough")
+    # cv2.imshow("depth", depth / 500)
+    # cv2.waitKey(1)
 
-    pcd = utils.create_o3d_pcd(color, depth, camera_intrinsics)
-
-    viz_geo.points = pcd.points
-    viz_geo.colors = pcd.colors
-    viz.update_geometry(viz_geo)
-    viz.poll_events()
-    viz.update_renderer()
+    if (len(camera_intrinsics) > 0 and len(color) > 0) and len(depth) > 0:
+        if rospy.get_time() - time_since_last_pcd >= 1:
+            pcd = create_o3d_pcd(color, depth, camera_intrinsics)
+            time_since_last_pcd = rospy.get_time()
 
 
 def handle_generate_heuristic_grasp(req):
@@ -60,7 +62,10 @@ def handle_generate_heuristic_grasp(req):
 
 
 def generate_heuristic_grasp_server():
+    global time_since_last_pcd
     rospy.init_node("generate_heuristic_grasp_server")
+
+    time_since_last_pcd = rospy.get_time()
 
     rospy.Service(
         "generate_heuristic_grasp",
@@ -78,9 +83,23 @@ def generate_heuristic_grasp_server():
         "/camera_wrist/depth/image_raw", numpy_msg(Image), depth_image_callback
     )
 
-    rospy.spin()
+    first_time = True
 
+    while not rospy.is_shutdown():
+        if pcd:
+            pcd_geo.points = pcd.points
+            pcd_geo.colors = pcd.colors
+
+            if first_time:
+                viz.add_geometry(pcd_geo)
+                first_time = False
+            else:
+                viz.update_geometry(pcd_geo)
+                
+        viz.poll_events()
+        viz.update_renderer()
     viz.destroy_window()
+
 
 if __name__ == "__main__":
     generate_heuristic_grasp_server()
