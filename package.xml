@@ -13,6 +13,8 @@
   <exec_depend>message_runtime</exec_depend>
   <depend>rosbridge_server</depend>
   <depend>tf2_web_republisher</depend>
+  <depend>rospy</depend>
+  <depend>cv_bridge</depend>
 
   <export>
   </export>

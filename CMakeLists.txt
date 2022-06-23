@@ -10,6 +10,7 @@ project(aurmr_web_interface)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  cv_bridge
   std_msgs
   message_generation
 )
