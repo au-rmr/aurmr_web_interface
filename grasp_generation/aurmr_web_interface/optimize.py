@@ -18,15 +18,20 @@ def simulated_annealing(objective, x0, upper_bounds, lower_bounds, constrain, n_
     for i in range(n_iterations):
         # take a step
         candidate = curr + randn(len(upper_bounds)) * step_size
+        print("generated candidates")
 
         # Clamp the guess within the bounds
         candidate = np.clip(candidate, lower_bounds, upper_bounds).tolist()
+        print("clamped candidates in bounds")
 
         # Dynamically constrain the candidate
         candidate = constrain(candidate, best)
+        print("constrain candidates")
 
         # evaluate candidate point
         candidate_eval = objective(candidate, *args)
+        print("evaluated guess")
+
         # check for new best solution
         if candidate_eval < best_eval:
             # store new best point

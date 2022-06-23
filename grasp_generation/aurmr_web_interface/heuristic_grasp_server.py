@@ -14,7 +14,7 @@ import rospy
 import open3d as o3d
 import cv2
 
-from aurmr_web_interface.utils import create_o3d_pcd
+from aurmr_web_interface.utils import create_o3d_pcd, get_candidates, optimize, mask_to_index, index_to_mask
 
 bridge = CvBridge()
 
@@ -26,9 +26,11 @@ pcd = None
 time_since_last_pcd = 0
 
 pcd_geo = o3d.geometry.PointCloud()
+pcd_convex_hull = o3d.geometry.PointCloud()
+
 viz = o3d.visualization.Visualizer()
 viz.create_window()
-
+viz.add_geometry(pcd_convex_hull)
 
 def camera_info_callback(camera_info):
     global camera_intrinsics
@@ -52,12 +54,41 @@ def depth_image_callback(depth_image):
 
     if (len(camera_intrinsics) > 0 and len(color) > 0) and len(depth) > 0:
         if rospy.get_time() - time_since_last_pcd >= 1:
-            pcd = create_o3d_pcd(color, depth, camera_intrinsics)
+            pcd = create_o3d_pcd(color, depth, camera_intrinsics, add_noise=True)
             time_since_last_pcd = rospy.get_time()
 
 
 def handle_generate_heuristic_grasp(req):
     print(req.se2.x, req.se2.y, req.se2.theta)
+    xcoord = int(depth.shape[1] * req.se2.x)
+    ycoord = int(depth.shape[0] * req.se2.y)
+    print(xcoord, ycoord)
+
+    selected_point = depth.shape[1] * ycoord + xcoord
+
+    pcd_geo.points = pcd.points
+    pcd_geo.colors = pcd.colors
+    # pcd_geo.colors[selected_point] = [1,1,1]
+
+    # for candidate in get_candidates(pcd_geo, [selected_point], max_dist=5e-3):
+    #     pcd_geo.colors[candidate] = [1,1,1]
+
+    # pcd_geo.clear()
+
+    def viz_convex_hull(updated_pcd):
+        pcd_convex_hull.points = updated_pcd.points
+        pcd_convex_hull.colors = updated_pcd.colors
+        print("updated viz")
+
+    mask = optimize(
+        pcd,
+        selected_point,
+        starting_search_range=5e-3,
+        constrain_range=1e-2,
+        viz_function=viz_convex_hull,
+    )
+    # viz_convex_hull(pcd.select_by_index(mask_to_index(mask)).paint_uniform_color([0, 0, 1]))
+
     return GenerateHeuristicGraspResponse(result="test")
 
 
@@ -74,7 +105,7 @@ def generate_heuristic_grasp_server():
     )
 
     rospy.Subscriber(
-        "/camera_wrist/color/camera_info", CameraInfo, camera_info_callback
+        "/camera_wrist/depth/camera_info", CameraInfo, camera_info_callback
     )
     rospy.Subscriber(
         "/camera_wrist/color/image_raw", numpy_msg(Image), color_image_callback
@@ -87,15 +118,14 @@ def generate_heuristic_grasp_server():
 
     while not rospy.is_shutdown():
         if pcd:
-            pcd_geo.points = pcd.points
-            pcd_geo.colors = pcd.colors
-
             if first_time:
-                viz.add_geometry(pcd_geo)
+                pcd_geo.points = pcd.points
+                pcd_geo.colors = pcd.colors
                 first_time = False
-            else:
-                viz.update_geometry(pcd_geo)
-                
+                viz.add_geometry(pcd_geo)
+
+            viz.update_geometry(pcd_geo)
+            viz.update_geometry(pcd_convex_hull)
         viz.poll_events()
         viz.update_renderer()
     viz.destroy_window()

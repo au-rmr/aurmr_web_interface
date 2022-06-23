@@ -148,24 +148,6 @@ def objective_function(x, *args):
     return error
 
 
-def constrain_to_neighboring_pts(curr, prev, pcd):
-    c = np.array(curr).astype(int)
-    p = np.array(
-        utils.index_to_mask(get_candidates(pcd, utils.mask_to_index(prev)), len(prev))
-    ).astype(int)
-    return np.bitwise_and(c, p).tolist()
-
-
-def get_candidates(pcd, guess_idxs, max_dist=5e-6):
-    guess_pts = np.asarray(pcd.points)[guess_idxs]
-    guess_pts = tuple(map(list, guess_pts))
-
-    tree = KDTree(pcd.points)
-    results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
-
-    return list(set(chain(*results)))
-
-
 def optimize(pcd, starting_pt):
     starting_guesses_idx = []
     starting_guess_mask = [0] * len(pcd.points)
@@ -186,7 +168,7 @@ def optimize(pcd, starting_pt):
     #     ]
     # )
 
-    constraint = partial(constrain_to_neighboring_pts, pcd=pcd)
+    constraint = partial(utils.constrain_to_neighboring_pts, pcd=pcd)
 
     simulated_annealing(
         objective_function,
