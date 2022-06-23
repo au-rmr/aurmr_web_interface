@@ -80,9 +80,10 @@ def handle_generate_heuristic_grasp(req):
         pcd_convex_hull.colors = updated_pcd.colors
         print("updated viz")
 
+    ss_amount = 10
     mask = optimize(
-        pcd,
-        selected_point,
+        pcd.uniform_down_sample(ss_amount),
+        int(selected_point / ss_amount),
         starting_search_range=5e-3,
         constrain_range=1e-2,
         viz_function=viz_convex_hull,

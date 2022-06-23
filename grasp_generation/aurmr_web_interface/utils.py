@@ -1,12 +1,23 @@
-from tracemalloc import start
 import numpy as np
 import open3d as o3d
 from scipy.spatial import KDTree
 from itertools import chain
 from aurmr_web_interface.optimize import simulated_annealing
 from functools import partial
+from time import time
 
+def timer_func(func):
+    # This function shows the execution time of 
+    # the function object passed
+    def wrap_func(*args, **kwargs):
+        t1 = time()
+        result = func(*args, **kwargs)
+        t2 = time()
+        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s')
+        return result
+    return wrap_func
 
+@timer_func
 def mask_to_index(mask):
     idx = []
     for i in range(len(mask)):
@@ -15,6 +26,7 @@ def mask_to_index(mask):
     return idx
 
 
+@timer_func
 def index_to_mask(idx, mask_len):
     mask = [0] * mask_len
 
@@ -46,24 +58,30 @@ def create_o3d_pcd(color_img, depth_img, camera_intrinsics, add_noise=False):
     return o3d_pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
 
 
-def constrain_to_neighboring_pts(curr, prev, pcd, radius=5e-6):
+@timer_func
+def constrain_to_neighboring_pts(curr, prev, pcd, radius=5e-6, kdtree=None):
     c = np.array(curr).astype(int)
     p = np.array(
-        index_to_mask(get_candidates(pcd, mask_to_index(prev), max_dist=radius), len(prev))
+        index_to_mask(get_candidates(pcd, mask_to_index(prev), max_dist=radius, kdtree=kdtree), len(prev))
     ).astype(int)
     return np.bitwise_and(c, p).tolist()
 
 
-def get_candidates(pcd, guess_idxs, max_dist=5e-6):
+@timer_func
+def get_candidates(pcd, guess_idxs, max_dist=5e-6, kdtree=None):
     guess_pts = np.asarray(pcd.points)[guess_idxs]
     guess_pts = tuple(map(list, guess_pts))
 
-    tree = KDTree(pcd.points)
+    if not kdtree:
+        tree = KDTree(pcd.points)
+    else:
+        tree = kdtree
     results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
 
     return list(set(chain(*results)))
 
 
+@timer_func
 def objective_function(x, *args):
     pcd = args[0]
     viz_function = args[1]
@@ -86,7 +104,7 @@ def objective_function(x, *args):
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term * 1000 + (-5e-0 * num_pts_term)
+    error = dist_term * 1000 + (-3e-3 * num_pts_term)
     print("calculated error:", error)
 
     # print(error, end="\r")
@@ -99,7 +117,9 @@ def optimize(pcd, starting_pt, starting_search_range=1e-5, constrain_range=1e-3,
         get_candidates(pcd, [starting_pt], max_dist=starting_search_range), len(pcd.points)
     )
 
-    constraint = partial(constrain_to_neighboring_pts, pcd=pcd, radius=constrain_range)
+    tree = KDTree(pcd.points)
+
+    constraint = partial(constrain_to_neighboring_pts, pcd=pcd, radius=constrain_range, kdtree=tree)
     
     result = simulated_annealing(
         objective_function,
@@ -107,7 +127,7 @@ def optimize(pcd, starting_pt, starting_search_range=1e-5, constrain_range=1e-3,
         [1] * len(pcd.points),
         [0] * len(pcd.points),
         constraint,
-        n_iterations=100,
+        n_iterations=20,
         step_size=10,
         temp=1000,
         args=(pcd, viz_function),

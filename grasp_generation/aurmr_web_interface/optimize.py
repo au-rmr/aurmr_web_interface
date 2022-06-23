@@ -36,8 +36,9 @@ def simulated_annealing(objective, x0, upper_bounds, lower_bounds, constrain, n_
         if candidate_eval < best_eval:
             # store new best point
             best, best_eval = candidate, candidate_eval
-            # report progress
-            # print(">%d f(%s) = %.5f" % (i, best, best_eval))
+        
+        # report progress
+        print(f"iteration {i}: {best_eval}")
 
         # difference between candidate and current point evaluation
         diff = candidate_eval - curr_eval
