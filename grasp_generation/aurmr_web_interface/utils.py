@@ -5,6 +5,13 @@ from itertools import chain
 from aurmr_web_interface.optimize import simulated_annealing
 from functools import partial
 from time import time
+from time import perf_counter
+from contextlib import contextmanager
+
+@contextmanager
+def catchtime() -> float:
+    start = perf_counter()
+    yield lambda: perf_counter() - start
 
 def timer_func(func):
     # This function shows the execution time of 
@@ -69,6 +76,7 @@ def constrain_to_neighboring_pts(curr, prev, pcd, radius=5e-6, kdtree=None):
 
 @timer_func
 def get_candidates(pcd, guess_idxs, max_dist=5e-6, kdtree=None):
+    # guess_idxs = np.random.choice(guess_idxs, int(len(guess_idxs)/10), replace=False)
     guess_pts = np.asarray(pcd.points)[guess_idxs]
     guess_pts = tuple(map(list, guess_pts))
 
@@ -76,7 +84,10 @@ def get_candidates(pcd, guess_idxs, max_dist=5e-6, kdtree=None):
         tree = KDTree(pcd.points)
     else:
         tree = kdtree
-    results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
+
+    with catchtime() as t:
+        results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
+        print("queried tree", t())
 
     return list(set(chain(*results)))
 
@@ -92,7 +103,7 @@ def objective_function(x, *args):
 
     filtered_convex_hull = filtered_pcd.compute_convex_hull()[0]
     filtered_convex_hull_pcd = filtered_convex_hull.sample_points_uniformly(
-        len(filtered_pcd.points) * 10
+        len(filtered_pcd.points) * 5
     )
     print("generated convex hull")
 

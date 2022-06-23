@@ -66,8 +66,10 @@ def handle_generate_heuristic_grasp(req):
 
     selected_point = depth.shape[1] * ycoord + xcoord
 
-    pcd_geo.points = pcd.points
-    pcd_geo.colors = pcd.colors
+    ss_amount = 10
+    downsampled = pcd.voxel_down_sample(5e-3)
+    pcd_geo.points = downsampled.points
+    pcd_geo.colors = downsampled.colors
     # pcd_geo.colors[selected_point] = [1,1,1]
 
     # for candidate in get_candidates(pcd_geo, [selected_point], max_dist=5e-3):
@@ -80,7 +82,11 @@ def handle_generate_heuristic_grasp(req):
         pcd_convex_hull.colors = updated_pcd.colors
         print("updated viz")
 
-    ss_amount = 10
+    closes_pt_idx = 0
+    for pt in range(len(downsampled.points)):
+        if np.linalg.norm(downsampled.points[closes_pt_idx] - pcd.points[selected_point]) < np.linalg.norm(downsampled.points[pt] - pcd.points[selected_point]):
+            closes_pt_idx = pt
+
     mask = optimize(
         pcd.uniform_down_sample(ss_amount),
         int(selected_point / ss_amount),

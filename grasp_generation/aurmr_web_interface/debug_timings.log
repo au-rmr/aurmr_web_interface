@@ -1,0 +1,309 @@
+Function 'get_candidates' executed in 0.1529s
+Function 'index_to_mask' executed in 0.0002s
+Function 'mask_to_index' executed in 0.0043s
+filtered pcd based on input: 19
+generated convex hull
+updated viz
+calculated error: -0.05684640305725394
+Function 'objective_function' executed in 0.2033s
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0041s
+Function 'get_candidates' executed in 0.8470s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 0.9706s
+constrain candidates
+Function 'mask_to_index' executed in 0.0033s
+filtered pcd based on input: 73
+generated convex hull
+updated viz
+calculated error: -0.20646951022004517
+Function 'objective_function' executed in 0.1375s
+evaluated guess
+iteration 0: -0.20646951022004517
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0031s
+Function 'get_candidates' executed in 0.7954s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 0.9316s
+constrain candidates
+Function 'mask_to_index' executed in 0.0030s
+filtered pcd based on input: 172
+generated convex hull
+updated viz
+calculated error: -0.45406278475839273
+Function 'objective_function' executed in 0.1494s
+evaluated guess
+iteration 1: -0.45406278475839273
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0331s
+Function 'get_candidates' executed in 1.0253s
+Function 'index_to_mask' executed in 0.0001s
+Function 'constrain_to_neighboring_pts' executed in 1.1822s
+constrain candidates
+Function 'mask_to_index' executed in 0.0030s
+filtered pcd based on input: 348
+generated convex hull
+updated viz
+calculated error: -0.8903462319941702
+Function 'objective_function' executed in 0.1031s
+evaluated guess
+iteration 2: -0.8903462319941702
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0042s
+Function 'get_candidates' executed in 0.9459s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 1.2129s
+constrain candidates
+Function 'mask_to_index' executed in 0.0030s
+filtered pcd based on input: 503
+generated convex hull
+updated viz
+calculated error: -1.290470655714438
+Function 'objective_function' executed in 0.1616s
+evaluated guess
+iteration 3: -1.290470655714438
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0039s
+Function 'get_candidates' executed in 0.9956s
+Function 'index_to_mask' executed in 0.0003s
+Function 'constrain_to_neighboring_pts' executed in 1.0926s
+constrain candidates
+Function 'mask_to_index' executed in 0.0033s
+filtered pcd based on input: 599
+generated convex hull
+updated viz
+calculated error: -1.5091768684300244
+Function 'objective_function' executed in 0.1876s
+evaluated guess
+iteration 4: -1.5091768684300244
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0030s
+Function 'get_candidates' executed in 0.8611s
+Function 'index_to_mask' executed in 0.0001s
+Function 'constrain_to_neighboring_pts' executed in 1.0085s
+constrain candidates
+Function 'mask_to_index' executed in 0.0031s
+filtered pcd based on input: 660
+generated convex hull
+updated viz
+calculated error: -1.6328364742962858
+Function 'objective_function' executed in 0.1082s
+evaluated guess
+iteration 5: -1.6328364742962858
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0031s
+Function 'get_candidates' executed in 0.7341s
+Function 'index_to_mask' executed in 0.0003s
+Function 'constrain_to_neighboring_pts' executed in 0.9355s
+constrain candidates
+Function 'mask_to_index' executed in 0.0050s
+filtered pcd based on input: 767
+generated convex hull
+updated viz
+calculated error: -1.9271034515007721
+Function 'objective_function' executed in 0.2356s
+evaluated guess
+iteration 6: -1.9271034515007721
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0036s
+Function 'get_candidates' executed in 0.9698s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 1.1963s
+constrain candidates
+Function 'mask_to_index' executed in 0.0801s
+filtered pcd based on input: 809
+generated convex hull
+updated viz
+calculated error: -2.036800423037524
+Function 'objective_function' executed in 0.1709s
+evaluated guess
+iteration 7: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0031s
+Function 'get_candidates' executed in 0.8181s
+Function 'index_to_mask' executed in 0.0001s
+Function 'constrain_to_neighboring_pts' executed in 0.9716s
+constrain candidates
+Function 'mask_to_index' executed in 0.0381s
+filtered pcd based on input: 782
+generated convex hull
+updated viz
+calculated error: -1.951744858255655
+Function 'objective_function' executed in 0.1703s
+evaluated guess
+iteration 8: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0031s
+Function 'get_candidates' executed in 0.8181s
+Function 'index_to_mask' executed in 0.0001s
+Function 'constrain_to_neighboring_pts' executed in 0.9305s
+constrain candidates
+Function 'mask_to_index' executed in 0.0030s
+filtered pcd based on input: 793
+generated convex hull
+updated viz
+calculated error: -1.9996860674384338
+Function 'objective_function' executed in 0.2260s
+evaluated guess
+iteration 9: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0934s
+Function 'get_candidates' executed in 0.8817s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 1.1622s
+constrain candidates
+Function 'mask_to_index' executed in 0.0342s
+filtered pcd based on input: 797
+generated convex hull
+updated viz
+calculated error: -1.9944457555427224
+Function 'objective_function' executed in 0.1499s
+evaluated guess
+iteration 10: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0035s
+Function 'get_candidates' executed in 0.7475s
+Function 'index_to_mask' executed in 0.0003s
+Function 'constrain_to_neighboring_pts' executed in 0.9045s
+constrain candidates
+Function 'mask_to_index' executed in 0.0318s
+filtered pcd based on input: 802
+generated convex hull
+updated viz
+calculated error: -2.013426896554874
+Function 'objective_function' executed in 0.3185s
+evaluated guess
+iteration 11: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0029s
+Function 'get_candidates' executed in 0.7191s
+Function 'index_to_mask' executed in 0.0003s
+Function 'constrain_to_neighboring_pts' executed in 0.8891s
+constrain candidates
+Function 'mask_to_index' executed in 0.0029s
+filtered pcd based on input: 794
+generated convex hull
+updated viz
+calculated error: -1.9795141926923883
+Function 'objective_function' executed in 0.2094s
+evaluated guess
+iteration 12: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0031s
+Function 'get_candidates' executed in 0.8380s
+Function 'index_to_mask' executed in 0.0003s
+Function 'constrain_to_neighboring_pts' executed in 0.9748s
+constrain candidates
+Function 'mask_to_index' executed in 0.0050s
+filtered pcd based on input: 759
+generated convex hull
+updated viz
+calculated error: -1.8943010383323005
+Function 'objective_function' executed in 0.1365s
+evaluated guess
+iteration 13: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0031s
+Function 'get_candidates' executed in 0.8226s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 1.0039s
+constrain candidates
+Function 'mask_to_index' executed in 0.0234s
+filtered pcd based on input: 760
+generated convex hull
+updated viz
+calculated error: -1.8909462611525347
+Function 'objective_function' executed in 0.2992s
+evaluated guess
+iteration 14: -2.036800423037524
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0033s
+Function 'get_candidates' executed in 0.9506s
+Function 'index_to_mask' executed in 0.0003s
+Function 'constrain_to_neighboring_pts' executed in 1.1542s
+constrain candidates
+Function 'mask_to_index' executed in 0.0029s
+filtered pcd based on input: 812
+generated convex hull
+updated viz
+calculated error: -2.049728455013021
+Function 'objective_function' executed in 0.1762s
+evaluated guess
+iteration 15: -2.049728455013021
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0031s
+Function 'get_candidates' executed in 0.9635s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 1.0527s
+constrain candidates
+Function 'mask_to_index' executed in 0.0373s
+filtered pcd based on input: 771
+generated convex hull
+updated viz
+calculated error: -1.9237164651254657
+Function 'objective_function' executed in 0.1736s
+evaluated guess
+iteration 16: -2.049728455013021
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0043s
+Function 'get_candidates' executed in 1.1227s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 1.3092s
+constrain candidates
+Function 'mask_to_index' executed in 0.0558s
+filtered pcd based on input: 773
+generated convex hull
+updated viz
+calculated error: -1.9392594506217944
+Function 'objective_function' executed in 0.2274s
+evaluated guess
+iteration 17: -2.049728455013021
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0365s
+Function 'get_candidates' executed in 0.9442s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 1.3280s
+constrain candidates
+Function 'mask_to_index' executed in 0.0029s
+filtered pcd based on input: 798
+generated convex hull
+updated viz
+calculated error: -1.980790094785529
+Function 'objective_function' executed in 0.3037s
+evaluated guess
+iteration 18: -2.049728455013021
+generated candidates
+clamped candidates in bounds
+Function 'mask_to_index' executed in 0.0322s
+Function 'get_candidates' executed in 0.7278s
+Function 'index_to_mask' executed in 0.0002s
+Function 'constrain_to_neighboring_pts' executed in 0.9401s
+constrain candidates
+Function 'mask_to_index' executed in 0.0030s
+filtered pcd based on input: 785
+generated convex hull
+updated viz
+calculated error: -1.9603326684219513
+Function 'objective_function' executed in 0.2288s
+evaluated guess
+iteration 19: -2.049728455013021
+Function 'index_to_mask' executed in 0.0026s
