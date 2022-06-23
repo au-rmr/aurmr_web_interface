@@ -76,7 +76,6 @@ def constrain_to_neighboring_pts(curr, prev, pcd, radius=5e-6, kdtree=None):
 
 @timer_func
 def get_candidates(pcd, guess_idxs, max_dist=5e-6, kdtree=None):
-    # guess_idxs = np.random.choice(guess_idxs, int(len(guess_idxs)/10), replace=False)
     guess_pts = np.asarray(pcd.points)[guess_idxs]
     guess_pts = tuple(map(list, guess_pts))
 
@@ -115,14 +114,14 @@ def objective_function(x, *args):
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term * 1000 + (-3e-3 * num_pts_term)
+    error = dist_term * 1000 + (-8e-3 * num_pts_term)
     print("calculated error:", error)
 
     # print(error, end="\r")
 
     return error
 
-
+@timer_func
 def optimize(pcd, starting_pt, starting_search_range=1e-5, constrain_range=1e-3, viz_function=None):
     starting_guess_mask = index_to_mask(
         get_candidates(pcd, [starting_pt], max_dist=starting_search_range), len(pcd.points)
@@ -138,7 +137,7 @@ def optimize(pcd, starting_pt, starting_search_range=1e-5, constrain_range=1e-3,
         [1] * len(pcd.points),
         [0] * len(pcd.points),
         constraint,
-        n_iterations=20,
+        n_iterations=5,
         step_size=10,
         temp=1000,
         args=(pcd, viz_function),

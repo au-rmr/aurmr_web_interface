@@ -84,14 +84,14 @@ def handle_generate_heuristic_grasp(req):
 
     closes_pt_idx = 0
     for pt in range(len(downsampled.points)):
-        if np.linalg.norm(downsampled.points[closes_pt_idx] - pcd.points[selected_point]) < np.linalg.norm(downsampled.points[pt] - pcd.points[selected_point]):
+        if np.linalg.norm(downsampled.points[closes_pt_idx] - pcd.points[selected_point]) > np.linalg.norm(downsampled.points[pt] - pcd.points[selected_point]):
             closes_pt_idx = pt
 
     mask = optimize(
-        pcd.uniform_down_sample(ss_amount),
-        int(selected_point / ss_amount),
-        starting_search_range=5e-3,
-        constrain_range=1e-2,
+        downsampled,
+        closes_pt_idx,
+        starting_search_range=1e-2,
+        constrain_range=2e-2,
         viz_function=viz_convex_hull,
     )
     # viz_convex_hull(pcd.select_by_index(mask_to_index(mask)).paint_uniform_color([0, 0, 1]))
