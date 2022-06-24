@@ -37,14 +37,18 @@ time_since_last_pcd = 0
 pcd_geo = o3d.geometry.PointCloud()
 pcd_convex_hull = o3d.geometry.PointCloud()
 bbox = o3d.geometry.OrientedBoundingBox()
+gripper_viz = o3d.geometry.TriangleMesh()
 
 viz = o3d.visualization.Visualizer()
 viz.create_window()
 viz.add_geometry(pcd_convex_hull)
 viz.add_geometry(bbox)
+viz.add_geometry(gripper_viz)
+
 
 tf_listener = None
-pose_publisher = rospy.Publisher('heuristic_grasp_pose', PoseStamped, queue_size=1)
+pose_publisher = rospy.Publisher("heuristic_grasp_pose", PoseStamped, queue_size=1)
+
 
 def camera_info_callback(camera_info):
     global camera_intrinsics
@@ -81,6 +85,8 @@ def handle_generate_heuristic_grasp(req):
     selected_point = depth.shape[1] * ycoord + xcoord
 
     bbox.clear()
+    global gripper_viz
+    gripper_viz.clear()
     downsampled = pcd.voxel_down_sample(5e-3)
     pcd_geo.points = downsampled.points
     pcd_geo.colors = downsampled.colors
@@ -135,14 +141,13 @@ def handle_generate_heuristic_grasp(req):
 
     object_width = max_bound[0] - min_bound[0]
     object_center = pcd_bbox.get_center()
-    # object_center[1] -= 0.5
+    object_center[2] += 0.1
     object_rotation = req.se2.theta
 
     response = GenerateHeuristicGraspResponse()
     response.grasp.width = object_width
 
-
-    r = Rotation.from_euler('zyx', [0, -90, 0], degrees=True)
+    r = Rotation.from_euler("zyx", [0, -90, 0], degrees=True)
     q = r.as_quat()
 
     p = PoseStamped()
@@ -155,12 +160,44 @@ def handle_generate_heuristic_grasp(req):
     p.pose.position.y = -object_center[1]
     p.pose.position.z = -object_center[2]
 
-    p = tf_listener.transformPose('world', p)
+    p = tf_listener.transformPose("world", p)
 
     pose_publisher.publish(p)
 
     response.grasp.pose.position = p.pose.position
     response.grasp.pose.orientation = p.pose.orientation
+
+    gripper_mesh = o3d.geometry.TriangleMesh()
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=5, height=1, depth=1)
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=1, height=1, depth=5).translate(
+    (0, 0, -5)
+    )
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=1, height=1, depth=5).translate(
+    (5, 0, -5)
+    )
+    gripper_mesh = gripper_mesh.scale(0.02, gripper_mesh.get_center())
+    gripper_mesh.compute_vertex_normals()
+
+    trans = gripper_mesh.translate(
+        [object_center[0], object_center[1], object_center[2] - 0.075], relative=False
+    )
+    # trans = gripper.rotate(
+    #     Rotation.from_euler("xyz", [0, 0, req.se2.theta]).as_matrix(),
+    #     trans.get_center(),
+    # )
+    # trans = trans.rotate(
+    #     trans.get_rotation_matrix_from_xyz((0, 0, req.se2.theta)), trans.get_center()
+    # )
+    trans = trans.rotate(pcd_bbox.R, trans.get_center())
+
+    gripper_viz.vertices = trans.vertices
+    gripper_viz.vertex_normals = trans.vertex_normals
+    gripper_viz.triangles = trans.triangles
+    gripper_viz.triangle_uvs = trans.triangle_uvs
+    gripper_viz.triangle_normals = trans.triangle_normals
+    gripper_viz.triangle_material_ids = trans.triangle_material_ids
+    gripper_viz.textures = trans.textures
+    gripper_viz.adjacency_list = trans.adjacency_list
 
     return response
 
@@ -203,6 +240,7 @@ def generate_heuristic_grasp_server():
             viz.update_geometry(pcd_geo)
             viz.update_geometry(pcd_convex_hull)
             viz.update_geometry(bbox)
+            viz.update_geometry(gripper_viz)
         viz.poll_events()
         viz.update_renderer()
     viz.destroy_window()

@@ -65,6 +65,7 @@ function SE2(
     const onMouseUp = (event) => {
         setMousePressed(false)
         dispatch(setPose(localPose))
+        log.debug(localPose)
     }
 
     const onMouseLeave = (event) => {
