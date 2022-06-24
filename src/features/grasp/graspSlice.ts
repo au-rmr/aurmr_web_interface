@@ -28,17 +28,26 @@ export const generateHeuristicGrasp = createAsyncThunk<Grasp, SE2Types.Pose>('gr
                     + generateHeuristicGrasp.name
                     + ': '
                     + result);
-                resolve({
-                    width: result.grasp.width,
-                    rotation: result.grasp.rotation,
-                    center: {
-                        x: result.grasp.center.x,
-                        y: result.grasp.center.y,
-                        z: result.grasp.center.z
-                    }
-                })
-            });
             generateHeuristicGraspService.unadvertise()
+            // resolve({
+            //     width: result.grasp.width,
+            //     pose: {
+            //         position: {
+            //             x: result.grasp.pose.position.x,
+            //             y: result.grasp.pose.position.y,
+            //             z: result.grasp.pose.position.z
+            //         },
+            //         orientation: {
+            //             x: result.grasp.pose.orientation.x,
+            //             y: result.grasp.pose.orientation.y,
+            //             z: result.grasp.pose.orientation.z,
+            //             w: result.grasp.pose.orientation.w
+            //         }
+            //     }
+            // })
+            // resolve(JSON.parse(JSON.stringify(result.grasp)))
+            resolve(result.grasp)
+        });
         } else {
             reject("invalid pose")
         }
@@ -47,11 +56,18 @@ export const generateHeuristicGrasp = createAsyncThunk<Grasp, SE2Types.Pose>('gr
 
 export interface Grasp {
     width: number,
-    rotation: number,
-    center: {
-        x: number,
-        y: number,
-        z: number
+    pose: {
+        position: {
+            x: number,
+            y: number,
+            z: number
+        },
+        orientation: {
+            x: number,
+            y: number,
+            z: number,
+            w: number
+        }
     }
 }
 
@@ -80,7 +96,6 @@ export const graspSlice = createSlice({
                 state.graspGeneration.status = 'loading'
             })
             .addCase(generateHeuristicGrasp.fulfilled, (state, action) => {
-                log.debug(action.payload)
                 state.graspGeneration.generatedGrasp = action.payload
                 state.graspGeneration.status = 'idle'
             })

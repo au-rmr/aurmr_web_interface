@@ -8,11 +8,14 @@ from aurmr_web_interface.srv import (
 )
 from sensor_msgs.msg import CameraInfo, Image
 from rospy.numpy_msg import numpy_msg
+from geometry_msgs.msg import PoseStamped
 from cv_bridge import CvBridge
 import numpy as np
 import rospy
+import tf
 import open3d as o3d
 import cv2
+from scipy.spatial.transform import Rotation
 
 from aurmr_web_interface.utils import (
     create_o3d_pcd,
@@ -40,6 +43,8 @@ viz.create_window()
 viz.add_geometry(pcd_convex_hull)
 viz.add_geometry(bbox)
 
+tf_listener = None
+pose_publisher = rospy.Publisher('heuristic_grasp_pose', PoseStamped, queue_size=1)
 
 def camera_info_callback(camera_info):
     global camera_intrinsics
@@ -128,26 +133,44 @@ def handle_generate_heuristic_grasp(req):
     bbox.extent = pcd_bbox.extent
     bbox.R = pcd_bbox.R
 
-    print(max_bound, min_bound)
-
     object_width = max_bound[0] - min_bound[0]
     object_center = pcd_bbox.get_center()
-    object_center[1] += 0.1
+    # object_center[1] -= 0.5
     object_rotation = req.se2.theta
 
     response = GenerateHeuristicGraspResponse()
     response.grasp.width = object_width
-    response.grasp.rotation = object_rotation
-    response.grasp.center.x = object_center[0]
-    response.grasp.center.y = object_center[1]
-    response.grasp.center.z = object_center[2]
+
+
+    r = Rotation.from_euler('zyx', [0, -90, 0], degrees=True)
+    q = r.as_quat()
+
+    p = PoseStamped()
+    p.header.frame_id = "camera_wrist_depth_optical_frame"
+    p.pose.orientation.x = q[0]
+    p.pose.orientation.y = q[1]
+    p.pose.orientation.z = q[2]
+    p.pose.orientation.w = q[3]
+    p.pose.position.x = object_center[0]
+    p.pose.position.y = -object_center[1]
+    p.pose.position.z = -object_center[2]
+
+    p = tf_listener.transformPose('world', p)
+
+    pose_publisher.publish(p)
+
+    response.grasp.pose.position = p.pose.position
+    response.grasp.pose.orientation = p.pose.orientation
 
     return response
 
 
 def generate_heuristic_grasp_server():
     global time_since_last_pcd
+    global tf_listener
     rospy.init_node("generate_heuristic_grasp_server")
+
+    tf_listener = tf.TransformListener()
 
     time_since_last_pcd = rospy.get_time()
 
