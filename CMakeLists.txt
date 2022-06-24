@@ -60,6 +60,7 @@ add_message_files(
 add_service_files(
   FILES
   GenerateHeuristicGrasp.srv
+  ExecuteGrasp.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -189,6 +190,10 @@ include_directories(
 # )
 
 catkin_install_python(PROGRAMS grasp_generation/aurmr_web_interface/heuristic_grasp_server.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+catkin_install_python(PROGRAMS grasp_generation/aurmr_web_interface/tahoma_controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
