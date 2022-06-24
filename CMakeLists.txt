@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   std_msgs
   message_generation
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -52,6 +53,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   SE2.msg
+  Grasp.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -72,6 +74,7 @@ generate_messages(
   DEPENDENCIES
   # actionlib_msgs#   geometry_msgs#   nav_msgs#   std_msgs
   std_msgs
+  geometry_msgs
 )
 
 ################################################

@@ -142,4 +142,5 @@ def optimize(pcd, starting_pt, starting_search_range=1e-5, constrain_range=1e-3,
         temp=1000,
         args=(pcd, viz_function),
     )
-    return index_to_mask(result[0], len(pcd.points))
+    
+    return result[0]

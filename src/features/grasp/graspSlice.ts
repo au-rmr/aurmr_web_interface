@@ -1,4 +1,4 @@
-import {createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 import * as ROSLIB from 'roslib';
 import store, { AppState } from '../../app/store';
@@ -7,7 +7,7 @@ import * as log from 'loglevel';
 import { ROS } from '../ros/rosSlice';
 import { SE2Types } from '../se2/se2.utils';
 
-export const generateHeuristicGrasp = createAsyncThunk<{result: string}, SE2Types.Pose>('grasp/generateHeuristicGrasp', (pose: SE2Types.Pose) => {
+export const generateHeuristicGrasp = createAsyncThunk<Grasp, SE2Types.Pose>('grasp/generateHeuristicGrasp', (pose: SE2Types.Pose) => {
     log.debug("Generating Heuristic Grasp")
     log.debug(pose)
 
@@ -23,25 +23,42 @@ export const generateHeuristicGrasp = createAsyncThunk<{result: string}, SE2Type
 
     return new Promise((resolve, reject) => {
         if (pose.x > 0 && pose.y > 0) {
-            generateHeuristicGraspService.callService(request, function(result) {
-                console.log('Result for service call on '
-                  + generateHeuristicGrasp.name
-                  + ': '
-                  + result.result);
-                  resolve(result.result)
-              });
-              generateHeuristicGraspService.unadvertise()
+            generateHeuristicGraspService.callService(request, function (result) {
+                log.debug('Result for service call on '
+                    + generateHeuristicGrasp.name
+                    + ': '
+                    + result);
+                resolve({
+                    width: result.grasp.width,
+                    rotation: result.grasp.rotation,
+                    center: {
+                        x: result.grasp.center.x,
+                        y: result.grasp.center.y,
+                        z: result.grasp.center.z
+                    }
+                })
+            });
+            generateHeuristicGraspService.unadvertise()
         } else {
             reject("invalid pose")
         }
     })
 })
 
+export interface Grasp {
+    width: number,
+    rotation: number,
+    center: {
+        x: number,
+        y: number,
+        z: number
+    }
+}
 
 export interface GraspState {
     graspGeneration: {
         status: string,
-        generatedGrasp: any
+        generatedGrasp?: Grasp
     }
 }
 
@@ -58,14 +75,15 @@ export const graspSlice = createSlice({
     reducers: {
     },
     extraReducers: builder => {
-      builder
-        .addCase(generateHeuristicGrasp.pending, (state, action) => {
-          state.graspGeneration.status = 'loading'
-        })
-        .addCase(generateHeuristicGrasp.fulfilled, (state, action) => {
-          state.graspGeneration.generatedGrasp = action.payload.result
-          state.graspGeneration.status = 'idle'
-        })
+        builder
+            .addCase(generateHeuristicGrasp.pending, (state, action) => {
+                state.graspGeneration.status = 'loading'
+            })
+            .addCase(generateHeuristicGrasp.fulfilled, (state, action) => {
+                log.debug(action.payload)
+                state.graspGeneration.generatedGrasp = action.payload
+                state.graspGeneration.status = 'idle'
+            })
     }
 })
 

@@ -14,7 +14,13 @@ import rospy
 import open3d as o3d
 import cv2
 
-from aurmr_web_interface.utils import create_o3d_pcd, get_candidates, optimize, mask_to_index, index_to_mask
+from aurmr_web_interface.utils import (
+    create_o3d_pcd,
+    get_candidates,
+    optimize,
+    mask_to_index,
+    index_to_mask,
+)
 
 bridge = CvBridge()
 
@@ -27,10 +33,13 @@ time_since_last_pcd = 0
 
 pcd_geo = o3d.geometry.PointCloud()
 pcd_convex_hull = o3d.geometry.PointCloud()
+bbox = o3d.geometry.OrientedBoundingBox()
 
 viz = o3d.visualization.Visualizer()
 viz.create_window()
 viz.add_geometry(pcd_convex_hull)
+viz.add_geometry(bbox)
+
 
 def camera_info_callback(camera_info):
     global camera_intrinsics
@@ -66,7 +75,7 @@ def handle_generate_heuristic_grasp(req):
 
     selected_point = depth.shape[1] * ycoord + xcoord
 
-    ss_amount = 10
+    bbox.clear()
     downsampled = pcd.voxel_down_sample(5e-3)
     pcd_geo.points = downsampled.points
     pcd_geo.colors = downsampled.colors
@@ -84,7 +93,9 @@ def handle_generate_heuristic_grasp(req):
 
     closes_pt_idx = 0
     for pt in range(len(downsampled.points)):
-        if np.linalg.norm(downsampled.points[closes_pt_idx] - pcd.points[selected_point]) > np.linalg.norm(downsampled.points[pt] - pcd.points[selected_point]):
+        if np.linalg.norm(
+            downsampled.points[closes_pt_idx] - pcd.points[selected_point]
+        ) > np.linalg.norm(downsampled.points[pt] - pcd.points[selected_point]):
             closes_pt_idx = pt
 
     mask = optimize(
@@ -94,9 +105,44 @@ def handle_generate_heuristic_grasp(req):
         constrain_range=2e-2,
         viz_function=viz_convex_hull,
     )
-    # viz_convex_hull(pcd.select_by_index(mask_to_index(mask)).paint_uniform_color([0, 0, 1]))
+    mask_pcd = downsampled.select_by_index(mask_to_index(mask))
 
-    return GenerateHeuristicGraspResponse(result="test")
+    R = mask_pcd.get_rotation_matrix_from_xyz((0, 0, -req.se2.theta))
+    center = mask_pcd.get_center()
+    mask_pcd_rotated = mask_pcd.rotate(R, center)
+
+    # pcd_geo.clear()
+    # viz_convex_hull(mask_pcd_rotated.paint_uniform_color([0, 0, 1]))
+
+    pcd_bbox = mask_pcd_rotated.get_axis_aligned_bounding_box()
+
+    max_bound = pcd_bbox.max_bound
+    min_bound = pcd_bbox.min_bound
+
+    R = mask_pcd.get_rotation_matrix_from_xyz((0, 0, req.se2.theta))
+    center = mask_pcd.get_center()
+    pcd_bbox = pcd_bbox.get_oriented_bounding_box()
+    pcd_bbox.rotate(R, center)
+    bbox.center = pcd_bbox.center
+    bbox.color = pcd_bbox.color
+    bbox.extent = pcd_bbox.extent
+    bbox.R = pcd_bbox.R
+
+    print(max_bound, min_bound)
+
+    object_width = max_bound[0] - min_bound[0]
+    object_center = pcd_bbox.get_center()
+    object_center[1] += 0.1
+    object_rotation = req.se2.theta
+
+    response = GenerateHeuristicGraspResponse()
+    response.grasp.width = object_width
+    response.grasp.rotation = object_rotation
+    response.grasp.center.x = object_center[0]
+    response.grasp.center.y = object_center[1]
+    response.grasp.center.z = object_center[2]
+
+    return response
 
 
 def generate_heuristic_grasp_server():
@@ -133,6 +179,7 @@ def generate_heuristic_grasp_server():
 
             viz.update_geometry(pcd_geo)
             viz.update_geometry(pcd_convex_hull)
+            viz.update_geometry(bbox)
         viz.poll_events()
         viz.update_renderer()
     viz.destroy_window()

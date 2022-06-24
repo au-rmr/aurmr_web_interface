@@ -1,0 +1,3 @@
+float64 width
+float64 rotation
+geometry_msgs/Vector3 center

@@ -57,7 +57,7 @@ function SE2(
             setLocalPose({
                 x: localPose.x,
                 y: localPose.y,
-                theta: Math.atan2(y - localPose.y, x - localPose.x) * 180 / Math.PI
+                theta: -Math.atan2(y - localPose.y, x - localPose.x)
             })
         }
     }
@@ -80,7 +80,7 @@ function SE2(
     return <svg viewBox={`0 0 ${width/scale} ${height/scale}`} width={width} height={height} style={style}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}>
         {interfaceType == "targetanchor" &&
-            <TargetAnchor x={localPose.x/scale} y={localPose.y/scale} theta={localPose.theta} color={mousePressed ? color.accent : color.default} />
+            <TargetAnchor x={localPose.x/scale} y={localPose.y/scale} theta={ - localPose.theta * 180 / Math.PI} color={mousePressed ? color.accent : color.default} />
         }
     </svg>
 
