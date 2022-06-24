@@ -73,14 +73,14 @@ export interface Grasp {
 
 export interface GraspState {
     graspGeneration: {
-        status: string,
+        status: 'idle' | 'loading' ,
         generatedGrasp?: Grasp
     }
 }
 
 const initialState: GraspState = {
     graspGeneration: {
-        status: "n/a",
+        status: "idle",
         generatedGrasp: null
     }
 }
@@ -104,6 +104,6 @@ export const graspSlice = createSlice({
 
 // export const { disconnect } = rosSlice.actions;
 
-// export const selectConnected = (state: AppState) => state.ros.connected;
+export const selectRequestingGrasp = (state: AppState) => state.grasp.graspGeneration.status;
 
 export default graspSlice.reducer;

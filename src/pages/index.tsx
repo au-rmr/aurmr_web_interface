@@ -2,6 +2,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 
 import { Box, Button, Link, Paper, Stack, Typography } from "@mui/material";
+import LoadingButton from '@mui/lab/LoadingButton';
 
 import ROSConnection from "../features/ros/ROSConnection";
 import ROSVideoDisplay from "../features/ros/ROSVideoDisplay";
@@ -10,13 +11,15 @@ import * as log from 'loglevel'
 import SE2 from "../features/se2/SE2";
 import { useState } from "react";
 import store from '../app/store';
-import { generateHeuristicGrasp } from "../features/grasp/graspSlice";
-import { useAppDispatch } from "../app/hooks";
+import { generateHeuristicGrasp, selectRequestingGrasp } from "../features/grasp/graspSlice";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
 
 log.setLevel(log.levels.TRACE);
 
 const IndexPage: NextPage = () => {
   const dispatch = useAppDispatch();
+
+  const requestingGrasp = useAppSelector(selectRequestingGrasp);
 
   const [videoStreamSize, setVideoStreamSize] = useState({ x: 1920, y: 1080 });
   const targetWidth = 750;
@@ -53,10 +56,13 @@ const IndexPage: NextPage = () => {
           </Box>
           <Paper>
             <Stack spacing={2} sx={{ m: 2 }}>
-              <Button variant="outlined"
-                onClick={handleGenerateGrasp}>
+              <LoadingButton
+                onClick={handleGenerateGrasp}
+                loading={requestingGrasp == 'loading'}
+                variant="outlined"
+              >
                 Generate Grasp
-              </Button>
+              </LoadingButton>
               <Button variant="contained">
                 Execute Grasp
               </Button>
