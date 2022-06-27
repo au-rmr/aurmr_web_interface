@@ -6,12 +6,12 @@ from matplotlib import colors
 import numpy as np
 import open3d as o3d
 from scipy.spatial import KDTree
-from optimize import simulated_annealing
+from aurmr_web_interface.optimize import simulated_annealing
 
 import random
 import simplejson as json
 from itertools import chain
-import utils
+from aurmr_web_interface import utils
 from functools import partial
 
 #%%
