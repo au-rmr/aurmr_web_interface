@@ -76,6 +76,10 @@ def constrain_to_neighboring_pts(curr, prev, pcd, radius=5e-6, kdtree=None):
 
 @timer_func
 def get_candidates(pcd, guess_idxs, max_dist=5e-6, kdtree=None):
+    # TODO: do this with get_pcd_dist to see if its faster?
+    # get pcd_dist to convex hull (http://www.open3d.org/docs/release/tutorial/geometry/pointcloud.html#Point-cloud-distance)
+    # then filter for only points that are very close, those are the candidates
+    # or actually just compare it to itself and filter for the closest
     guess_pts = np.asarray(pcd.points)[guess_idxs]
     guess_pts = tuple(map(list, guess_pts))
 

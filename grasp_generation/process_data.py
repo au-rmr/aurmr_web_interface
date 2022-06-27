@@ -118,7 +118,7 @@ selected_pts = [
 ]
 
 # Pick a specific starting point
-selected_point_idx = selected_pts[13]  # 39880
+selected_point_idx = 39880  # selected_pts[13]
 print(o3d_pcd_selected.points[selected_point_idx])
 
 # %%
@@ -129,13 +129,30 @@ def objective_function(x, *args):
     filtered_pcd = pcd.select_by_index(indices)
 
     filtered_convex_hull = filtered_pcd.compute_convex_hull()[0]
+    filtered_convex_hull = filtered_convex_hull.compute_triangle_normals()
+
+    normals = np.asarray(filtered_convex_hull.triangle_normals)
+    ind = np.where(np.dot(normals, [0, 0, 1]) < 0.5)[0]
+    filtered_convex_hull.remove_triangles_by_index(ind)
+
     filtered_convex_hull_pcd = filtered_convex_hull.sample_points_uniformly(
         len(filtered_pcd.points) * 10
     )
 
+    # filtered_convex_hull_pcd.estimate_normals(
+    #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
+    # )
+
+    # normals = np.asarray(filtered_convex_hull_pcd.normals)
+    # print(normals, np.array([[0, 0, 1]]*len(filtered_convex_hull_pcd.normals)))
+    # dir_diff = np.dot(normals, np.array([[0, 0, 1]]*len(filtered_convex_hull_pcd.normals)))
+    # ind = np.where(np.dot(normals, [0,0,-1]) < 0.5)[0]
+    # filtered_convex_hull_pcd = filtered_convex_hull_pcd.select_by_index(ind)
+
     update_vis(filtered_pcd, filtered_convex_hull_pcd)
 
-    pcd_dist = filtered_pcd.compute_point_cloud_distance(filtered_convex_hull_pcd)
+    # pcd_dist = filtered_pcd.compute_point_cloud_distance(filtered_convex_hull_pcd)
+    pcd_dist = filtered_convex_hull_pcd.compute_point_cloud_distance(filtered_pcd)
 
     dist_term = np.sum(np.power(pcd_dist, 2))
 
@@ -179,18 +196,18 @@ def optimize(pcd, starting_pt):
         n_iterations=100,
         step_size=10,
         temp=1000,
-        args=(pcd,)
+        args=(pcd,),
     )
 
 
-# %%
-vis = o3d.visualization.VisualizerWithEditing()
-vis.create_window()
-vis.add_geometry(o3d_pcd_selected)
-vis.run()  # user picks points
-vis.destroy_window()
+# # %%
+# vis = o3d.visualization.VisualizerWithEditing()
+# vis.create_window()
+# vis.add_geometry(o3d_pcd_selected)
+# vis.run()  # user picks points
+# vis.destroy_window()
 
-selected_point_idx = vis.get_picked_points()[0]
+# selected_point_idx = vis.get_picked_points()[0]
 
 # %%
 viz_geo = o3d.geometry.PointCloud()
@@ -203,9 +220,11 @@ def update_vis(pcd, convex_hull):
     global viz_convex_hull_geo
     viz_geo.points = pcd.points
     viz_geo.colors = pcd.colors
+    viz_geo.normals = pcd.normals
 
     viz_convex_hull_geo.points = convex_hull.points
     viz_convex_hull_geo.colors = convex_hull.colors
+    viz_convex_hull_geo.normals = convex_hull.normals
 
     # vis.update_geometry(viz_geo)
     vis.update_geometry(viz_convex_hull_geo)
@@ -215,6 +234,8 @@ def update_vis(pcd, convex_hull):
 
 vis = o3d.visualization.Visualizer()
 vis.create_window()
+ro = vis.get_render_option().point_show_normal = True
+
 # vis.add_geometry(viz_geo)
 vis.add_geometry(o3d_pcd_selected)
 vis.add_geometry(viz_convex_hull_geo)
