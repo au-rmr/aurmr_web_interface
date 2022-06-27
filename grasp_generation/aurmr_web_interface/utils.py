@@ -118,6 +118,12 @@ def objective_function(x, *args):
     print("filtered pcd based on input:", len(filtered_pcd.points))
 
     filtered_convex_hull = filtered_pcd.compute_convex_hull()[0]
+    filtered_convex_hull = filtered_convex_hull.compute_triangle_normals()
+
+    normals = np.asarray(filtered_convex_hull.triangle_normals)
+    ind = np.where(np.dot(normals, [0, 0, 1]) < 0.5)[0]
+    filtered_convex_hull.remove_triangles_by_index(ind)
+
     filtered_convex_hull_pcd = filtered_convex_hull.sample_points_uniformly(
         len(filtered_pcd.points) * 5
     )
@@ -125,7 +131,7 @@ def objective_function(x, *args):
 
     viz_function(filtered_convex_hull_pcd)
 
-    pcd_dist = filtered_pcd.compute_point_cloud_distance(filtered_convex_hull_pcd)
+    pcd_dist = filtered_convex_hull_pcd.compute_point_cloud_distance(filtered_pcd)
 
     dist_term = np.sum(np.power(pcd_dist, 2))
 
