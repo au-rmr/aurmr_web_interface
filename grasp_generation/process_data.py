@@ -243,6 +243,5 @@ optimize(o3d_pcd_selected, selected_point_idx)
 
 vis.run()
 vis.destroy_window()
-# %%
 
 # %%

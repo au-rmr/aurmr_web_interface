@@ -8,21 +8,25 @@ from time import time
 from time import perf_counter
 from contextlib import contextmanager
 
+
 @contextmanager
 def catchtime() -> float:
     start = perf_counter()
     yield lambda: perf_counter() - start
 
+
 def timer_func(func):
-    # This function shows the execution time of 
+    # This function shows the execution time of
     # the function object passed
     def wrap_func(*args, **kwargs):
         t1 = time()
         result = func(*args, **kwargs)
         t2 = time()
-        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s')
+        print(f"Function {func.__name__!r} executed in {(t2-t1):.4f}s")
         return result
+
     return wrap_func
+
 
 @timer_func
 def mask_to_index(mask):
@@ -69,7 +73,10 @@ def create_o3d_pcd(color_img, depth_img, camera_intrinsics, add_noise=False):
 def constrain_to_neighboring_pts(curr, prev, pcd, radius=5e-6, kdtree=None):
     c = np.array(curr).astype(int)
     p = np.array(
-        index_to_mask(get_candidates(pcd, mask_to_index(prev), max_dist=radius, kdtree=kdtree), len(prev))
+        index_to_mask(
+            get_candidates(pcd, mask_to_index(prev), max_dist=radius, kdtree=kdtree),
+            len(prev),
+        )
     ).astype(int)
     return np.bitwise_and(c, p).tolist()
 
@@ -80,19 +87,25 @@ def get_candidates(pcd, guess_idxs, max_dist=5e-6, kdtree=None):
     # get pcd_dist to convex hull (http://www.open3d.org/docs/release/tutorial/geometry/pointcloud.html#Point-cloud-distance)
     # then filter for only points that are very close, those are the candidates
     # or actually just compare it to itself and filter for the closest
-    guess_pts = np.asarray(pcd.points)[guess_idxs]
-    guess_pts = tuple(map(list, guess_pts))
 
-    if not kdtree:
-        tree = KDTree(pcd.points)
-    else:
-        tree = kdtree
+    dists = pcd.compute_point_cloud_distance(pcd.select_by_index(guess_idxs))
+    dists = np.asarray(dists)
+    ind = np.where(dists < max_dist)[0]
+    return np.unique(np.concatenate((ind, guess_idxs), 0))
 
-    with catchtime() as t:
-        results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
-        print("queried tree", t())
+    # guess_pts = np.asarray(pcd.points)[guess_idxs]
+    # guess_pts = tuple(map(list, guess_pts))
 
-    return list(set(chain(*results)))
+    # if not kdtree:
+    #     tree = KDTree(pcd.points)
+    # else:
+    #     tree = kdtree
+
+    # with catchtime() as t:
+    #     results = tree.query_ball_point(guess_pts, max_dist, workers=-1).tolist()
+    #     print("queried tree", t())
+
+    # return list(set(chain(*results)))
 
 
 @timer_func
@@ -125,16 +138,26 @@ def objective_function(x, *args):
 
     return error
 
+
 @timer_func
-def optimize(pcd, starting_pt, starting_search_range=1e-5, constrain_range=1e-3, viz_function=None):
+def optimize(
+    pcd,
+    starting_pt,
+    starting_search_range=1e-5,
+    constrain_range=1e-3,
+    viz_function=None,
+):
     starting_guess_mask = index_to_mask(
-        get_candidates(pcd, [starting_pt], max_dist=starting_search_range), len(pcd.points)
+        get_candidates(pcd, [starting_pt], max_dist=starting_search_range),
+        len(pcd.points),
     )
 
     tree = KDTree(pcd.points)
 
-    constraint = partial(constrain_to_neighboring_pts, pcd=pcd, radius=constrain_range, kdtree=tree)
-    
+    constraint = partial(
+        constrain_to_neighboring_pts, pcd=pcd, radius=constrain_range, kdtree=tree
+    )
+
     result = simulated_annealing(
         objective_function,
         starting_guess_mask,
@@ -146,5 +169,5 @@ def optimize(pcd, starting_pt, starting_search_range=1e-5, constrain_range=1e-3,
         temp=1000,
         args=(pcd, viz_function),
     )
-    
+
     return result[0]
