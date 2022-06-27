@@ -167,27 +167,24 @@ def handle_generate_heuristic_grasp(req):
     response.grasp.pose.position = p.pose.position
     response.grasp.pose.orientation = p.pose.orientation
 
+    gripper_thickness = 0.02
+    gripper_depth = 0.05
+    gripper_width = object_width + gripper_thickness + 0.02
+
     gripper_mesh = o3d.geometry.TriangleMesh()
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=5, height=1, depth=1)
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=1, height=1, depth=5).translate(
-    (0, 0, -5)
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_width, height=gripper_thickness, depth=gripper_thickness)
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_thickness, height=gripper_thickness, depth=gripper_depth).translate(
+    (0, 0, -gripper_depth)
     )
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=1, height=1, depth=5).translate(
-    (5, 0, -5)
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_thickness, height=gripper_thickness, depth=gripper_depth).translate(
+    (gripper_width, 0, -gripper_depth)
     )
-    gripper_mesh = gripper_mesh.scale(0.02, gripper_mesh.get_center())
+    # gripper_mesh = gripper_mesh.scale(0.02, gripper_mesh.get_center())
     gripper_mesh.compute_vertex_normals()
 
     trans = gripper_mesh.translate(
         [object_center[0], object_center[1], object_center[2] - 0.075], relative=False
     )
-    # trans = gripper.rotate(
-    #     Rotation.from_euler("xyz", [0, 0, req.se2.theta]).as_matrix(),
-    #     trans.get_center(),
-    # )
-    # trans = trans.rotate(
-    #     trans.get_rotation_matrix_from_xyz((0, 0, req.se2.theta)), trans.get_center()
-    # )
     trans = trans.rotate(pcd_bbox.R, trans.get_center())
 
     gripper_viz.vertices = trans.vertices
