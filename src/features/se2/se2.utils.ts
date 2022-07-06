@@ -3,5 +3,6 @@ export namespace SE2Types {
         x: number,
         y: number,
         theta: number
+        width: number
     }
 }

@@ -6,7 +6,8 @@ import { SE2Types } from "./se2.utils";
 const initialState: SE2Types.Pose = {
     x: -1,
     y: -1,
-    theta: 0
+    theta: 0,
+    width: 0
 }
 
 export const se2Slice = createSlice({
@@ -17,6 +18,7 @@ export const se2Slice = createSlice({
             state.x = action.payload.x;
             state.y = action.payload.y;
             state.theta = action.payload.theta;
+            state.width = action.payload.width;
         }
     }
 })

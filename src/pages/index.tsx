@@ -37,7 +37,8 @@ const IndexPage: NextPage = () => {
     dispatch(generateHeuristicGrasp({
       x: se2.x / videoStreamSize.x,
       y: se2.y / videoStreamSize.y,
-      theta: se2.theta
+      theta: se2.theta,
+      width: se2.width
     }))
   };
 
@@ -50,10 +51,15 @@ const IndexPage: NextPage = () => {
       <Stack spacing={2} alignItems="center" mt={2}>
         {/* <Counter /> */}
         <Stack spacing={2} direction="row" alignItems="center">
-          <Box sx={{ position: "relative", width: videoStreamSize.x, height: videoStreamSize.y }}>
-            <SE2 width={videoStreamSize.x} height={videoStreamSize.y} interfaceType="targetanchor" style={{ border: 'solid', borderRadius: 4, position: "absolute", top: 0, left: 0, zIndex: 10 }} />
-            <ROSVideoDisplay style={{ borderRadius: 4, width: videoStreamSize.x, position: "absolute", top: 0, left: 0 }} topicName="/camera_wrist/color/image_raw/compressed" streamSizeCallback={handleStreamSize} />
-          </Box>
+          <SE2 width={videoStreamSize.x} height={videoStreamSize.y}
+            interfaceType="targetanchor" widthInputType="buttons"
+            style={{ border: 'solid', borderRadius: 4, position: "absolute", top: 0, left: 0, zIndex: 10 }}
+            background={<ROSVideoDisplay
+              topicName="/camera_wrist/color/image_raw/compressed"
+              streamSizeCallback={handleStreamSize}
+              style={{ borderRadius: 4, width: videoStreamSize.x, position: "absolute", top: 0, left: 0 }}
+            />}
+          />
           <Paper>
             <Stack spacing={2} sx={{ m: 2 }}>
               <LoadingButton
