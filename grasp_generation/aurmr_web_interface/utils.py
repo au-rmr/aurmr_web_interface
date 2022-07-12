@@ -178,17 +178,27 @@ def optimize(
 
     return result[0]
 
-def generate_gripper(thickness=0.02, depth=0.05, width=0.04, color=[1,1,1], trans=[0,0,0], rot=np.identity(3)):
+
+def generate_gripper(
+    thickness=0.02,
+    depth=0.05,
+    width=0.04,
+    color=[1, 1, 1],
+    trans=[0, 0, 0],
+    rot=np.identity(3),
+):
     gripper_width = width + thickness * 2
 
     gripper_mesh = o3d.geometry.TriangleMesh()
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_width, height=thickness, depth=thickness)
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=thickness, height=thickness, depth=depth).translate(
-    (0, 0, -depth)
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(
+        width=gripper_width, height=thickness, depth=thickness
     )
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=thickness, height=thickness, depth=depth).translate(
-    (gripper_width, 0, -depth)
-    )
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(
+        width=thickness, height=thickness, depth=depth
+    ).translate((0, 0, -depth))
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(
+        width=thickness, height=thickness, depth=depth
+    ).translate((gripper_width, 0, -depth))
     # gripper_mesh = gripper_mesh.scale(0.02, gripper_mesh.get_center())
     gripper_mesh.compute_vertex_normals()
     gripper_mesh.paint_uniform_color(color)
