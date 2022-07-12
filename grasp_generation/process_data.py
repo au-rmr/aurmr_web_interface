@@ -191,7 +191,7 @@ def optimize(pcd, starting_pt):
     #     ]
     # )
 
-    constraint = partial(utils.constrain_to_neighboring_pts, pcd=pcd)
+    constraint = partial(utils.constrain_to_neighboring_pts, pcd=pcd, radius = 0.0000075)
 
     result = simulated_annealing(
         objective_function,
@@ -244,6 +244,18 @@ vis = o3d.visualization.Visualizer()
 vis.create_window()
 ro = vis.get_render_option().point_show_normal = True
 
+sphere = o3d.geometry.TriangleMesh.create_sphere(0.000005).translate(o3d_pcd_selected.points[selected_end_point_idx])
+sphere += o3d.geometry.TriangleMesh.create_sphere(0.000005).translate(o3d_pcd_selected.points[selected_point_idx])
+vis.add_geometry(sphere)
+vis.add_geometry(utils.generate_gripper(
+    thickness=0.000005,
+    depth=0.00005,
+    width=np.linalg.norm(pt_dist[:2]),
+    color=[0,0,1],
+    trans=(o3d_pcd_selected.points[selected_end_point_idx] + o3d_pcd_selected.points[selected_point_idx])/2,
+    rot=Rotation.from_euler('zyx', [theta,0,0]).as_matrix()
+))
+
 # vis.add_geometry(viz_geo)
 vis.add_geometry(o3d_pcd_selected)
 vis.add_geometry(viz_convex_hull_geo)
@@ -271,10 +283,7 @@ object_center = pcd_bbox.get_center()
 object_center[2] += 0.00008
 object_rotation = theta
 
-r = Rotation.from_euler("zyx", [0, -90, 0], degrees=True)
-q = r.as_quat()
-
-gripper_thickness = 0.00002
+gripper_thickness = 0.000005
 gripper_depth = 0.00005
 gripper_width = object_width + gripper_thickness * 2
 
@@ -288,12 +297,20 @@ gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_thickness, he
 )
 # gripper_mesh = gripper_mesh.scale(0.02, gripper_mesh.get_center())
 gripper_mesh.compute_vertex_normals()
+gripper_mesh.paint_uniform_color([1,0,0])
 
 trans = gripper_mesh.translate(
     [object_center[0], object_center[1], object_center[2] - 0.000075], relative=False
 )
 trans = trans.rotate(pcd_bbox.R, trans.get_center())
-# vis.add_geometry(trans)
+vis.add_geometry(utils.generate_gripper(
+    thickness=0.000005,
+    depth=0.00005,
+    width=object_width,
+    color=[1,0,0],
+    trans=[object_center[0], object_center[1], object_center[2] - 0.000075],
+    rot=pcd_bbox.R
+))
 
 vis.run()
 vis.destroy_window()
