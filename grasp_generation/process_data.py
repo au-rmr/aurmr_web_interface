@@ -6,6 +6,7 @@ from matplotlib import colors
 import numpy as np
 import open3d as o3d
 from scipy.spatial import KDTree
+from scipy.spatial.transform import Rotation
 from aurmr_web_interface.optimize import simulated_annealing
 
 import random
@@ -118,8 +119,13 @@ selected_pts = [
 ]
 
 # Pick a specific starting point
-selected_point_idx = 39880  # selected_pts[13]
-print(o3d_pcd_selected.points[selected_point_idx])
+selected_point_idx = 39837  # selected_pts[13]
+selected_end_point_idx = 39344
+
+pt_dist = o3d_pcd_selected.points[selected_end_point_idx] - o3d_pcd_selected.points[selected_point_idx]
+theta = np.arctan2(pt_dist[1], pt_dist[0])
+
+print(o3d_pcd_selected.points[selected_point_idx], o3d_pcd_selected.points[selected_end_point_idx])
 
 # %%
 def objective_function(x, *args):
@@ -158,7 +164,7 @@ def objective_function(x, *args):
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term * 1000 + (-5e-9 * num_pts_term)
+    error = dist_term**2 * 5e11 + (-1e-8 * num_pts_term)
 
     print(error, end="\r")
 
@@ -187,7 +193,7 @@ def optimize(pcd, starting_pt):
 
     constraint = partial(utils.constrain_to_neighboring_pts, pcd=pcd)
 
-    simulated_annealing(
+    result = simulated_annealing(
         objective_function,
         starting_guess_mask,
         [1] * len(o3d_pcd_selected.points),
@@ -198,6 +204,8 @@ def optimize(pcd, starting_pt):
         temp=1000,
         args=(pcd,),
     )
+
+    return result[0]
 
 
 # # %%
@@ -239,7 +247,53 @@ ro = vis.get_render_option().point_show_normal = True
 # vis.add_geometry(viz_geo)
 vis.add_geometry(o3d_pcd_selected)
 vis.add_geometry(viz_convex_hull_geo)
-optimize(o3d_pcd_selected, selected_point_idx)
+mask = optimize(o3d_pcd_selected, selected_point_idx)
+
+mask_pcd = o3d_pcd_selected.select_by_index(utils.mask_to_index(mask))
+
+R = mask_pcd.get_rotation_matrix_from_xyz((0, 0, -theta))
+center = mask_pcd.get_center()
+mask_pcd_rotated = mask_pcd.rotate(R, center)
+
+pcd_bbox = mask_pcd_rotated.get_axis_aligned_bounding_box()
+
+max_bound = pcd_bbox.max_bound
+min_bound = pcd_bbox.min_bound
+
+R = mask_pcd.get_rotation_matrix_from_xyz((0, 0, theta))
+center = mask_pcd.get_center()
+pcd_bbox = pcd_bbox.get_oriented_bounding_box()
+pcd_bbox.rotate(R, center)
+vis.add_geometry(pcd_bbox)
+
+object_width = max_bound[0] - min_bound[0]
+object_center = pcd_bbox.get_center()
+object_center[2] += 0.00008
+object_rotation = theta
+
+r = Rotation.from_euler("zyx", [0, -90, 0], degrees=True)
+q = r.as_quat()
+
+gripper_thickness = 0.00002
+gripper_depth = 0.00005
+gripper_width = object_width + gripper_thickness * 2
+
+gripper_mesh = o3d.geometry.TriangleMesh()
+gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_width, height=gripper_thickness, depth=gripper_thickness)
+gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_thickness, height=gripper_thickness, depth=gripper_depth).translate(
+(0, 0, -gripper_depth)
+)
+gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_thickness, height=gripper_thickness, depth=gripper_depth).translate(
+(gripper_width, 0, -gripper_depth)
+)
+# gripper_mesh = gripper_mesh.scale(0.02, gripper_mesh.get_center())
+gripper_mesh.compute_vertex_normals()
+
+trans = gripper_mesh.translate(
+    [object_center[0], object_center[1], object_center[2] - 0.000075], relative=False
+)
+trans = trans.rotate(pcd_bbox.R, trans.get_center())
+# vis.add_geometry(trans)
 
 vis.run()
 vis.destroy_window()

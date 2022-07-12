@@ -169,16 +169,18 @@ def handle_generate_heuristic_grasp(req):
 
     gripper_thickness = 0.02
     gripper_depth = 0.05
-    gripper_width = object_width + gripper_thickness + 0.02
+    gripper_width = object_width + gripper_thickness * 2
 
     gripper_mesh = o3d.geometry.TriangleMesh()
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_width, height=gripper_thickness, depth=gripper_thickness)
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_thickness, height=gripper_thickness, depth=gripper_depth).translate(
-    (0, 0, -gripper_depth)
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(
+        width=gripper_width, height=gripper_thickness, depth=gripper_thickness
     )
-    gripper_mesh += o3d.geometry.TriangleMesh.create_box(width=gripper_thickness, height=gripper_thickness, depth=gripper_depth).translate(
-    (gripper_width, 0, -gripper_depth)
-    )
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(
+        width=gripper_thickness, height=gripper_thickness, depth=gripper_depth
+    ).translate((0, 0, -gripper_depth))
+    gripper_mesh += o3d.geometry.TriangleMesh.create_box(
+        width=gripper_thickness, height=gripper_thickness, depth=gripper_depth
+    ).translate((gripper_width, 0, -gripper_depth))
     # gripper_mesh = gripper_mesh.scale(0.02, gripper_mesh.get_center())
     gripper_mesh.compute_vertex_normals()
 

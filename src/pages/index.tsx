@@ -21,7 +21,7 @@ const IndexPage: NextPage = () => {
 
   const requestingGrasp = useAppSelector(selectRequestingGrasp);
 
-  const [videoStreamSize, setVideoStreamSize] = useState({ x: 1920, y: 1080 });
+  const [videoStreamSize, setVideoStreamSize] = useState({ x: 640, y: 360 });
   const targetWidth = 750;
   const handleStreamSize = (size: { x: number, y: number }) => {
     const s = { x: targetWidth, y: size.y };
