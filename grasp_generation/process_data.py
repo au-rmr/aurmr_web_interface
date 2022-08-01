@@ -18,6 +18,8 @@ from functools import partial
 #%%
 filename = "datasets/train_shard_000000.h5"
 f = h5py.File(filename, "r")
+
+real_data = np.load("datasets/image_data.npy", allow_pickle=True).item()
 #%%
 # List all groups
 print("Keys: %s" % f.keys())
@@ -26,17 +28,27 @@ for key in f.keys():
 #%%
 ### Select 9 samples
 # indices = random.choices(range(f["frame1_metadata"].shape[0]), k=9)
-indices = [2673, 33, 2205, 3734, 2594, 2426, 3044, 3529, 2427]
+fake_data_indices = [2673, 33, 2205, 3734, 2594, 2426, 3044, 3529, 2427]
+real_data_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 imgs = []
 imgs_depth = []
 img_metadata = []
 
-for i in range(len(indices)):
-    imgs.append(f["frame1_data"][indices[i]][:, :, :3])
-    imgs_depth.append(f["frame1_depth"][indices[i]])
-    img_metadata.append(json.loads(f["frame1_metadata"][indices[i]]))
+# for i in range(len(fake_data_indices)):
+#     imgs.append(f["frame1_data"][fake_data_indices[i]][:, :, :3])
+#     imgs_depth.append(f["frame1_depth"][fake_data_indices[i]])
+#     img_metadata.append(json.loads(f["frame1_metadata"][fake_data_indices[i]])["camera"]["intrinsic_matrix"])
 
-print("Using indices:", indices)
+# print("Using fake data indices:", fake_data_indices)
+
+for i in range(len(real_data_indices)):
+    imgs.append(real_data["frame0_rgb"][real_data_indices[i]])
+    imgs_depth.append(real_data["frame0_depth"][real_data_indices[i]])
+    img_metadata.append(
+        np.array(real_data["frame0_info"][real_data_indices[i]]["P"]).reshape(3,4)[:,:3]
+    )
+
+print("Using real data indices:", real_data_indices)
 # %%
 ### Visualize the sample RGB data
 color_grid = ImageGrid(
@@ -76,7 +88,7 @@ o3d_depth_image = o3d.geometry.Image(
 
 # Get the camera intrinsics and convert to Open3D format
 intrinsic_matrix = np.array(
-    img_metadata[selected_img_idx]["camera"]["intrinsic_matrix"]
+    img_metadata[selected_img_idx]
 )
 o3d_intrinsic_matrix = o3d.camera.PinholeCameraIntrinsic()
 o3d_intrinsic_matrix.intrinsic_matrix = intrinsic_matrix
@@ -99,6 +111,7 @@ o3d_pcd_selected.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0
 # vis.destroy_window()
 # print(vis.get_picked_points())
 
+# Fake data pts
 selected_pts = [
     30911,
     31186,
@@ -121,6 +134,10 @@ selected_pts = [
 # Pick a specific starting point
 selected_point_idx = 39837  # selected_pts[13]
 selected_end_point_idx = 39344
+
+# Real data pts
+selected_point_idx = 389478  # selected_pts[13]
+selected_end_point_idx = 335777
 
 pt_dist = (
     o3d_pcd_selected.points[selected_end_point_idx]
