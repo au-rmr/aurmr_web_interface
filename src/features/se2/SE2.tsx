@@ -44,12 +44,21 @@ function SE2(
         const x = event.clientX - left;
         const y = event.clientY - top;
         log.debug("Click at", x, y);
-        setLocalPose({
-            x: x,
-            y: y,
-            theta: 0,
-            width: 0
-        })
+        if (widthInputType === "buttons") {
+            setLocalPose({
+                x: x - poseWidth / 2,
+                y: y,
+                theta: 0,
+                width: 0
+            })
+        } else {
+            setLocalPose({
+                x: x,
+                y: y,
+                theta: 0,
+                width: 0
+            })
+        }
 
         setMousePressed(true)
     }
@@ -65,12 +74,23 @@ function SE2(
                 setPoseWidth(Math.sqrt(Math.pow(x - localPose.x, 2) + Math.pow(y - localPose.y, 2)));
             }
 
-            setLocalPose({
-                x: localPose.x,
-                y: localPose.y,
-                theta: -Math.atan2(y - localPose.y, x - localPose.x),
-                width: poseWidth
-            })
+            const theta = -Math.atan2(y - localPose.y, x - localPose.x);
+
+            if (widthInputType === "buttons") {
+                setLocalPose({
+                    x: localPose.x + (Math.cos(localPose.theta) - Math.cos(theta)) * poseWidth/2,
+                    y: localPose.y + (Math.sin(localPose.theta) - Math.sin(theta)) * poseWidth/2,
+                    theta: theta,
+                    width: poseWidth
+                })
+            } else {
+                setLocalPose({
+                    x: localPose.x,
+                    y: localPose.y,
+                    theta: theta,
+                    width: 0
+                })
+            }
         }
     }
 
@@ -95,7 +115,14 @@ function SE2(
             <svg viewBox={`0 0 ${width / scale} ${height / scale}`} width={width} height={height} style={style}
                 onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}>
                 {interfaceType == "targetanchor" &&
-                    <TargetAnchor x={localPose.x / scale} y={localPose.y / scale} theta={- localPose.theta * 180 / Math.PI} color={mousePressed ? color.accent : color.default} width={poseWidth / scale} />
+                    <TargetAnchor
+                        x={(widthInputType === "buttons" ? localPose.x + Math.cos(localPose.theta) * poseWidth/2 : localPose.x) / scale}
+                        y={(widthInputType === "buttons" ? localPose.y + Math.sin(localPose.theta) * poseWidth/2 : localPose.y) / scale}
+                        theta={- localPose.theta * 180 / Math.PI}
+                        color={mousePressed ? color.accent : color.default}
+                        width={poseWidth / scale}
+                        centered={widthInputType === "buttons"}
+                    />
                 }
             </svg>
             {background}
