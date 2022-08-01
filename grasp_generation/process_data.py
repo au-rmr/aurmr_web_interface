@@ -45,7 +45,9 @@ for i in range(len(real_data_indices)):
     imgs.append(real_data["frame0_rgb"][real_data_indices[i]])
     imgs_depth.append(real_data["frame0_depth"][real_data_indices[i]])
     img_metadata.append(
-        np.array(real_data["frame0_info"][real_data_indices[i]]["P"]).reshape(3,4)[:,:3]
+        np.array(real_data["frame0_info"][real_data_indices[i]]["P"]).reshape(3, 4)[
+            :, :3
+        ]
     )
 
 print("Using real data indices:", real_data_indices)
@@ -87,9 +89,7 @@ o3d_depth_image = o3d.geometry.Image(
 )
 
 # Get the camera intrinsics and convert to Open3D format
-intrinsic_matrix = np.array(
-    img_metadata[selected_img_idx]
-)
+intrinsic_matrix = np.array(img_metadata[selected_img_idx])
 o3d_intrinsic_matrix = o3d.camera.PinholeCameraIntrinsic()
 o3d_intrinsic_matrix.intrinsic_matrix = intrinsic_matrix
 
@@ -104,6 +104,11 @@ o3d_pcd_selected = o3d.geometry.PointCloud.create_from_rgbd_image(
 # Flip the point cloud so it is facing the right way
 o3d_pcd_selected.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
 #%%
+o3d_pcd_selected = o3d_pcd_selected.crop(
+    o3d.geometry.AxisAlignedBoundingBox(
+        np.array([-0.2, -0.5, -10]), np.array([0.1, 0.5, 10])
+    )
+)
 # vis = o3d.visualization.VisualizerWithEditing()
 # vis.create_window()
 # vis.add_geometry(o3d_pcd_selected)
@@ -136,8 +141,8 @@ selected_point_idx = 39837  # selected_pts[13]
 selected_end_point_idx = 39344
 
 # Real data pts
-selected_point_idx = 389478  # selected_pts[13]
-selected_end_point_idx = 335777
+selected_point_idx = 85972 # 93960, 85972
+selected_end_point_idx = 77570
 
 pt_dist = (
     o3d_pcd_selected.points[selected_end_point_idx]
@@ -187,7 +192,7 @@ def objective_function(x, *args):
 
     num_pts_term = len(pcd_dist)
 
-    error = dist_term**2 * 5e11 + (-1e-8 * num_pts_term)
+    error = dist_term**2 * 5e2 + (-1e-2 * num_pts_term)
 
     print(error, end="\r")
 
@@ -200,7 +205,7 @@ def optimize(pcd, starting_pt):
 
     # TODO: use get_candidates here?
     for i in range(len(pcd.points)):
-        if np.linalg.norm(pcd.points[starting_pt] - pcd.points[i]) < 1e-05:
+        if np.linalg.norm(pcd.points[starting_pt] - pcd.points[i]) < 1e-02:
             starting_guesses_idx.append(i)
             starting_guess_mask[i] = 1
 
@@ -214,7 +219,7 @@ def optimize(pcd, starting_pt):
     #     ]
     # )
 
-    constraint = partial(utils.constrain_to_neighboring_pts, pcd=pcd, radius=0.0000075)
+    constraint = partial(utils.constrain_to_neighboring_pts, pcd=pcd, radius=0.01)
 
     result = simulated_annealing(
         objective_function,
@@ -267,27 +272,28 @@ vis = o3d.visualization.Visualizer()
 vis.create_window()
 ro = vis.get_render_option().point_show_normal = True
 
-sphere = o3d.geometry.TriangleMesh.create_sphere(0.000005).translate(
+scale = 0.01
+sphere = o3d.geometry.TriangleMesh.create_sphere(scale).translate(
     o3d_pcd_selected.points[selected_end_point_idx]
 )
-sphere += o3d.geometry.TriangleMesh.create_sphere(0.000005).translate(
+sphere += o3d.geometry.TriangleMesh.create_sphere(scale).translate(
     o3d_pcd_selected.points[selected_point_idx]
 )
-vis.add_geometry(sphere)
-vis.add_geometry(
-    utils.generate_gripper(
-        thickness=0.000005,
-        depth=0.00005,
-        width=np.linalg.norm(pt_dist[:2]),
-        color=[0, 0, 1],
-        trans=(
-            o3d_pcd_selected.points[selected_end_point_idx]
-            + o3d_pcd_selected.points[selected_point_idx]
-        )
-        / 2,
-        rot=Rotation.from_euler("zyx", [theta, 0, 0]).as_matrix(),
-    )
-)
+# vis.add_geometry(sphere)
+# vis.add_geometry(
+#     utils.generate_gripper(
+#         thickness=scale,
+#         depth=scale * 2,
+#         width=np.linalg.norm(pt_dist[:2]),
+#         color=[0, 0, 1],
+#         trans=(
+#             o3d_pcd_selected.points[selected_end_point_idx]
+#             + o3d_pcd_selected.points[selected_point_idx]
+#         )
+#         / 2,
+#         rot=Rotation.from_euler("zyx", [theta, 0, 0]).as_matrix(),
+#     )
+# )
 
 # vis.add_geometry(viz_geo)
 vis.add_geometry(o3d_pcd_selected)
@@ -338,10 +344,11 @@ trans = gripper_mesh.translate(
     [object_center[0], object_center[1], object_center[2] - 0.000075], relative=False
 )
 trans = trans.rotate(pcd_bbox.R, trans.get_center())
+
 vis.add_geometry(
     utils.generate_gripper(
-        thickness=0.000005,
-        depth=0.00005,
+        thickness=scale,
+        depth=scale*3,
         width=object_width,
         color=[1, 0, 0],
         trans=[object_center[0], object_center[1], object_center[2] - 0.000075],
